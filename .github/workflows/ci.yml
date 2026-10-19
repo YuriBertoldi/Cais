@@ -45,6 +45,10 @@ jobs:
           go-version: stable
           cache: true
 
+      # Sem isto, descobrir qual toolchain o job usou exige deducao a partir
+      # das versoes citadas no relatorio de vulnerabilidade.
+      - run: go version
+
       - name: Conferir formatacao
         run: |
           $foraDoPadrao = gofmt -l .
@@ -108,6 +112,10 @@ jobs:
           go-version: stable
           cache: true
 
+      # Sem isto, descobrir qual toolchain o job usou exige deducao a partir
+      # das versoes citadas no relatorio de vulnerabilidade.
+      - run: go version
+
       - name: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -124,6 +132,10 @@ jobs:
         with:
           go-version: stable
           cache: true
+
+      # Sem isto, descobrir qual toolchain o job usou exige deducao a partir
+      # das versoes citadas no relatorio de vulnerabilidade.
+      - run: go version
 
       - name: Compilar
         run: |
