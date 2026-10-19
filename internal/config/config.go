@@ -49,7 +49,8 @@ func Load() Config {
 	return c
 }
 
-// DirDados devolve o diretorio de dados do painel, criando-o se necessario.
+// DirDados devolve o caminho do diretorio de dados do painel. So monta a
+// string: quem cria o diretorio e o store.Open, no caminho do banco.
 //
 // Usa LOCALAPPDATA de proposito, nunca Roaming: em perfil de dominio o .db e os
 // arquivos -wal/-shm do SQLite seriam sincronizados no logoff, o que corrompe o
