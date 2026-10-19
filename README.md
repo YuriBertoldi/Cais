@@ -8,17 +8,14 @@ precisa de runtime nenhum.
 
 ## Por que isso existe
 
-O Docker Desktop passou a exigir assinatura paga em empresas acima de 250
-funcionários ou US$ 10 milhões de faturamento. A saída óbvia é usar o Docker
-Engine direto, que é Apache 2.0 e continua de graça.
+Quem roda o Docker Engine direto, sem interface gráfica em cima, acaba fazendo
+tudo pela linha de comando. Funciona, mas é um baque no dia a dia — sobretudo
+para quem não é de infraestrutura e só quer ver se o container subiu, olhar um
+log ou reiniciar um serviço.
 
-Só que aí você perde a interface e volta para a linha de comando. Para quem usa
-Docker o dia inteiro isso é um baque — principalmente para quem não é de
-infraestrutura e só quer ver se o container subiu.
-
-O Cais tapa esse buraco. Não tenta ser o Docker Desktop: não gerencia Kubernetes,
-não tem marketplace de extensão, não sincroniza nada com nuvem. Faz o que você
-realmente abria o Desktop para fazer.
+O Cais é uma alternativa leve para esse uso. Não tenta ser uma plataforma: não
+gerencia Kubernetes, não tem marketplace de extensão, não sincroniza nada com
+nuvem. Faz o arroz com feijão de quem mexe com container todo dia, e faz rápido.
 
 > Não tem ligação nenhuma com a Docker, Inc. É só um cliente da Engine API.
 > Detalhes em [NOTICE.md](NOTICE.md).
