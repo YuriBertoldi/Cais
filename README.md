@@ -74,9 +74,32 @@ assinado. Resolve com `Unblock-File .\cais.exe` no PowerShell.
 ## Antes de rodar: o Docker precisa estar acessível
 
 O Cais não embute motor nenhum. Ele conversa com um Docker Engine que já exista,
-pela Engine API em TCP.
+pela Engine API, por um de dois transportes:
 
-Se o seu daemon ainda não escuta em TCP, crie
+| Transporte | `-docker-host` | Exige |
+|---|---|---|
+| TCP | `tcp://127.0.0.1:2375` (padrão) | Daemon escutando em TCP, **sem autenticação** |
+| WSL (`dial-stdio`) | `wsl://<distro>` | Só o `docker` instalado na distro WSL |
+
+### Opção sem abrir porta: `wsl://`
+
+No Windows com WSL2 dá para não expor porta nenhuma. Com
+`-docker-host wsl://Ubuntu-24.04`, o Cais executa
+`wsl.exe -d Ubuntu-24.04 --exec docker system dial-stdio` e fala com o daemon
+pelo stdin/stdout desse processo, o mesmo transporte que o próprio Docker usa em
+`ssh://`. O daemon continua só no socket Unix, e só quem consegue executar o
+`wsl.exe` na sessão do usuário alcança a Engine API.
+
+```bash
+cais -docker-host wsl://Ubuntu-24.04 -wsl-distro Ubuntu-24.04
+```
+
+`wsl://` sem nome usa a distro padrão do WSL. Cada conexão da API é um processo
+`wsl.exe`, encerrado quando a conexão fecha.
+
+### Opção TCP
+
+Se preferir TCP e o seu daemon ainda não escuta nele, crie
 `/etc/systemd/system/docker.service.d/override.conf`:
 
 ```ini
@@ -114,7 +137,7 @@ tem um rodando, abre o navegador nele e sai de cena.
 | Opção | Padrão | Para quê |
 |---|---|---|
 | `-porta` | `45678` | Porta de escuta. `0` pega qualquer uma livre |
-| `-docker-host` | `tcp://127.0.0.1:2375` | Onde está a Engine API |
+| `-docker-host` | `tcp://127.0.0.1:2375` | Onde está a Engine API: `tcp://host:porta` ou `wsl://distro` |
 | `-wsl-distro` | `Ubuntu-24.04` | Distro usada para rodar o `docker compose` |
 | `-no-browser` | — | Não abrir o navegador ao iniciar |
 | `-db` | `%LOCALAPPDATA%\Cais\painel.db` | Banco local |
