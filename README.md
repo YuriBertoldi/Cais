@@ -207,9 +207,19 @@ go vet ./...
 ```
 
 O script roda formatação (`gofmt`), `go mod tidy`, `go vet`, os testes com
-cobertura e a compilação. O detector de corrida (`-race`) precisa de CGO e de
-um compilador C; se não houver `gcc` na máquina ele é pulado com aviso, e o CI
-cobre essa etapa.
+cobertura e a compilação. Duas etapas são puladas com aviso quando a ferramenta
+não está na máquina, porque o CI as cobre de qualquer forma:
+
+- o detector de corrida (`-race`), que precisa de CGO e de um compilador C;
+- o `govulncheck`, que se instala com
+  `go install golang.org/x/vuln/cmd/govulncheck@latest`.
+
+Vale instalar o `govulncheck`: ele reprova por vulnerabilidade **da biblioteca
+padrão** que o código de fato chama, então uma versão do Go atrasada em
+patches derruba o pipeline sozinha, sem nenhuma dependência nossa estar
+envolvida. É por isso que o CI usa `go-version: stable` e não a diretiva `go`
+do `go.mod` — aquela declara a versão mínima da linguagem, não o toolchain a
+usar para compilar.
 
 O pipeline (`.github/workflows/ci.yml`) repete tudo isso em `windows-latest` —
 o alvo real do produto, já que parte do comportamento depende de caminho

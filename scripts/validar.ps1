@@ -85,6 +85,28 @@ try {
         Write-Host "   PULADO: gcc nao encontrado (o CI roda esta etapa)." -ForegroundColor DarkGray
     }
 
+    # Mesmo gate do job "seguranca" do CI. Fica opcional porque depende de uma
+    # ferramenta externa e de rede; sem ela, instale com:
+    #   go install golang.org/x/vuln/cmd/govulncheck@latest
+    $govulncheck = Get-Command govulncheck -ErrorAction SilentlyContinue
+    if (-not $govulncheck) {
+        $candidato = Join-Path (& go env GOPATH) "bin\govulncheck.exe"
+        if (Test-Path $candidato) { $govulncheck = $candidato }
+    }
+    if ($govulncheck) {
+        Etapa "Vulnerabilidades conhecidas" {
+            & $govulncheck ./...
+            # 3 = encontrou vulnerabilidade que o codigo de fato chama.
+            if ($LASTEXITCODE -ne 0) { throw "govulncheck reprovou (codigo $LASTEXITCODE)" }
+        }
+    }
+    else {
+        Write-Host ""
+        Write-Host "== Vulnerabilidades conhecidas" -ForegroundColor Cyan
+        Write-Host "   PULADO: govulncheck nao encontrado (o CI roda esta etapa)." -ForegroundColor DarkGray
+        Write-Host "   Instale com: go install golang.org/x/vuln/cmd/govulncheck@latest" -ForegroundColor DarkGray
+    }
+
     Etapa "Compilacao" {
         & go build -o "$env:TEMP\cais-validacao.exe" .
         if ($LASTEXITCODE -ne 0) { throw "go build falhou" }

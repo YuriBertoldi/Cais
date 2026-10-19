@@ -7,6 +7,14 @@
 #
 # O job de vulnerabilidades roda em Linux porque e so analise do grafo de
 # dependencias, mais barata ali.
+#
+# Todos os jobs usam "go-version: stable", e nao "go-version-file: go.mod".
+# A diretiva `go` do go.mod declara a versao MINIMA da linguagem, nao a do
+# toolchain a usar: o setup-go instalaria exatamente aquela versao e o CI
+# passaria a compilar e escanear com uma biblioteca padrao sem os patches de
+# seguranca publicados depois dela. Com `go 1.26.0` no go.mod, o govulncheck
+# acusou 30 vulnerabilidades chamadas na stdlib -- nenhuma delas em
+# dependencia nossa, todas ja corrigidas em releases de patch do proprio Go.
 
 name: CI
 
@@ -34,7 +42,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable
           cache: true
 
       - name: Conferir formatacao
@@ -97,7 +105,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable
           cache: true
 
       - name: govulncheck
@@ -114,7 +122,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable
           cache: true
 
       - name: Compilar
