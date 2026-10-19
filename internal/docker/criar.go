@@ -96,8 +96,21 @@ func (c *Client) ImagePull(ctx context.Context, ref string, fn func(ProgressoPul
 // Cuidado com registry que traz porta: em "localhost:5000/app" os dois pontos
 // pertencem ao host, nao a tag. Por isso a busca e pelo ultimo ":" e so vale
 // se nao houver "/" depois dele.
+//
+// Referencia por digest ("nginx@sha256:abc...") tem o proprio separador. O "@"
+// vem antes do ":" do algoritmo, entao a regra do ultimo ":" partiria no lugar
+// errado e pediria ao daemon a tag "abc..." da imagem "nginx@sha256". O digest
+// inteiro, com o prefixo do algoritmo, vai no lugar da tag -- e o que a Engine
+// API espera.
 func separarTag(ref string) (string, string) {
 	ref = strings.TrimSpace(ref)
+
+	// i > 0 e i < len-1 descartam "@tudo" e "nginx@", que nao sao referencias
+	// validas e nao devem virar um pull de imagem sem nome ou sem tag.
+	if i := strings.LastIndex(ref, "@"); i > 0 && i < len(ref)-1 {
+		return ref[:i], ref[i+1:]
+	}
+
 	i := strings.LastIndex(ref, ":")
 	if i < 0 || strings.Contains(ref[i:], "/") {
 		return ref, "latest"

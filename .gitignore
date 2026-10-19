@@ -2,3 +2,6 @@ painel-docker.exe
 *.exe
 *.log
 dist/
+
+# Relatorio de cobertura gerado por scripts\validar.ps1
+cobertura.out
