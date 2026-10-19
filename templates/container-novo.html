@@ -1,0 +1,86 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Novo container</h1>
+    <p class="page-sub">Criar e iniciar um container a partir de uma imagem local.</p>
+  </div>
+  <a href="/containers" class="btn-secondary btn-sm">Voltar</a>
+</header>
+
+{{if not .DockerOK}}
+<div class="alert alert-erro"><strong>Sem conexão com o Docker Engine.</strong> {{.DockerErro}}</div>
+{{else}}
+
+<form method="POST" action="/containers/criar">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+
+  <section class="section-card">
+    <h2>Básico</h2>
+
+    <div class="form-grid-2">
+      <div>
+        <label for="imagem">Imagem <span class="req">*</span></label>
+        <input type="text" id="imagem" name="imagem" list="lista-imagens" required
+               value="{{.ImagemEscolhida}}" placeholder="nginx:alpine" autocomplete="off">
+        <datalist id="lista-imagens">
+          {{range .Imagens}}<option value="{{.}}">{{end}}
+        </datalist>
+        <small class="muted">Precisa estar local. Baixe em <a href="/images">Imagens</a> se faltar.</small>
+      </div>
+
+      <div>
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" name="nome" placeholder="meu-container" autocomplete="off">
+        <small class="muted">Opcional. Em branco, o Docker sorteia um.</small>
+      </div>
+    </div>
+
+    <label for="restart">Política de reinício</label>
+    <select id="restart" name="restart">
+      <option value="no">Não reiniciar</option>
+      <option value="unless-stopped" selected>Reiniciar, exceto se eu parar</option>
+      <option value="always">Sempre reiniciar</option>
+      <option value="on-failure">Só em caso de falha</option>
+    </select>
+  </section>
+
+  <section class="section-card">
+    <h2>Portas</h2>
+    <label for="portas">Uma por linha, no formato <code>host:container</code></label>
+    <textarea id="portas" name="portas" rows="3" placeholder="8080:80&#10;5433:5432&#10;53:53/udp"></textarea>
+    <small class="muted">
+      Aceita só o número (<code>8080</code>) para usar a mesma dos dois lados, e sufixo
+      <code>/udp</code>. As portas são publicadas em <strong>127.0.0.1</strong>, não na rede.
+    </small>
+  </section>
+
+  <section class="section-card">
+    <h2>Variáveis de ambiente</h2>
+    <label for="env">Uma por linha, no formato <code>CHAVE=valor</code></label>
+    <textarea id="env" name="env" rows="4" placeholder="POSTGRES_PASSWORD=segredo&#10;TZ=America/Sao_Paulo"></textarea>
+  </section>
+
+  <section class="section-card">
+    <h2>Volumes</h2>
+    <label for="volumes">Uma montagem por linha, no formato <code>origem:/destino</code></label>
+    <textarea id="volumes" name="volumes" rows="3" placeholder="meus-dados:/var/lib/postgresql/data&#10;/mnt/c/Sistemas/git/projeto:/app"></textarea>
+    <small class="muted">
+      A origem pode ser um volume nomeado ou um caminho absoluto <strong>como o daemon o enxerga</strong>.
+      Rodando no WSL, um caminho do Windows vira <code>/mnt/c/...</code>.
+      {{if .Volumes}}<br>Volumes existentes: {{range $i, $v := .Volumes}}{{if $i}}, {{end}}<code>{{$v}}</code>{{end}}.{{end}}
+    </small>
+  </section>
+
+  <section class="section-card">
+    <h2>Comando</h2>
+    <label for="cmd">Sobrescrever o comando padrão da imagem</label>
+    <input type="text" id="cmd" name="cmd" placeholder="deixe vazio para usar o da imagem" autocomplete="off">
+  </section>
+
+  <div class="form-acoes">
+    <button type="submit" class="btn-primary">Criar e iniciar</button>
+    <a href="/containers" class="btn-secondary">Cancelar</a>
+  </div>
+</form>
+{{end}}
+{{end}}

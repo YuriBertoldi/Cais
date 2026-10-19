@@ -1,0 +1,1825 @@
+/* ====================================================
+   CtrlLicença — Design System
+   Baseado no FinBertoldi, accent azul (#3498db)
+   ==================================================== */
+
+:root {
+  --bg-base:    #0f1419;
+  --bg-elev-1:  rgba(26, 32, 44, 0.85);
+  --bg-elev-2:  rgba(15, 20, 25, 0.6);
+  --bg-input:   rgba(15, 20, 25, 0.7);
+  --border-soft: rgba(255,255,255,0.08);
+  --border-mid:  rgba(255,255,255,0.14);
+  --text-primary:   #e6e9ed;
+  --text-secondary: #b0b8c4;
+  --text-muted:     #6a7385;
+
+  --color-accent:   #3498db;
+  --color-accent-2: #2178b5;
+  --color-green:    #27ae60;
+  --color-red:      #e74c3c;
+  --color-purple:   #9b59b6;
+  --color-orange:   #f39c12;
+  --color-teal:     #1abc9c;
+
+  --sidebar-width: 290px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.25);
+  --shadow-glow: 0 8px 24px rgba(52,152,219,0.25);
+
+  /* ---- Tipografia (Cais) ----
+     Segoe UI Variable e a fonte do Windows 11 e tem dois cortes oticos:
+     Text para corpo, Display para titulo. Nada vem de CDN -- o .exe precisa
+     funcionar offline. */
+  --font-sans: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI",
+               system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI",
+                  system-ui, -apple-system, sans-serif;
+  --font-mono: "Cascadia Code", "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+
+  /* Escala de texto. O arquivo herdado usava de .65rem a .72rem em rotulo,
+     o que fica apertado em tela cheia. */
+  --fs-xs:   0.80rem;
+  --fs-sm:   0.875rem;
+  --fs-base: 0.95rem;
+  --fs-lg:   1.0625rem;
+  --fs-xl:   1.375rem;
+  --fs-2xl:  1.75rem;
+}
+
+[data-theme="light"] {
+  --bg-base:    #f6f8fb;
+  --bg-elev-1:  rgba(255,255,255,0.95);
+  --bg-elev-2:  #ffffff;
+  --bg-input:   #ffffff;
+  --border-soft: rgba(0,0,0,0.08);
+  --border-mid:  rgba(0,0,0,0.14);
+  --text-primary:   #1a2332;
+  --text-secondary: #4b5563;
+  --text-muted:     #6b7280;
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* ====================================================
+   GLOBAL
+   ==================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Evita o Windows sintetizar negrito/italico falso quando o corte da
+     variavel nao existe -- e o que deixa texto "borrado". */
+  font-synthesis: none;
+}
+
+body {
+  margin: 0;
+  /* Fundo chapado. Os dois gradientes radiais herdados criavam manchas de
+     cor atras das tabelas e eram a maior fonte de ruido visual. */
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: -0.018em;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
+
+/* Numeros alinhados em coluna nas tabelas e nos cards de contagem. */
+table, .stat-value { font-variant-numeric: tabular-nums; }
+
+/* ====================================================
+   SIDEBAR
+   ==================================================== */
+body.has-sidebar { display: flex; min-height: 100vh; }
+
+.sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-width);
+  background: rgba(13,18,23,0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1rem 1rem;
+  z-index: 100;
+  transition: transform .25s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+[data-theme="light"] .sidebar { background: rgba(255,255,255,0.92); }
+
+.sidebar-brand { margin-bottom: 1.75rem; padding: 0 .25rem; }
+.brand-link {
+  display: flex; align-items: center; gap: .75rem;
+  text-decoration: none; color: var(--text-primary);
+}
+.brand-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  border-radius: 12px;
+  font-size: 1.15rem; font-weight: 800; color: #fff;
+  box-shadow: 0 6px 16px rgba(52,152,219,0.35);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; overflow: hidden; }
+.brand-text strong { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.015em; color: var(--text-primary); }
+.brand-text small  { font-size: .72rem; color: var(--text-muted); font-weight: 500; }
+
+.sidebar-nav {
+  flex: 1;
+  display: flex; flex-direction: column; gap: .15rem;
+  overflow-y: auto; padding: 0 .15rem;
+}
+.nav-section-label {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-muted); font-weight: 700;
+  margin: 1rem .65rem .4rem;
+}
+.nav-section-label:first-child { margin-top: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .7rem .85rem; border-radius: 10px;
+  text-decoration: none; color: var(--text-secondary);
+  font-size: .9rem; font-weight: 500;
+  transition: background .15s, color .15s;
+  position: relative;
+}
+.nav-ico {
+  font-size: 1.1rem; line-height: 1;
+  min-width: 22px; width: 22px;
+  text-align: center; flex-shrink: 0;
+  overflow: visible;
+}
+.nav-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-item:hover { background: var(--border-soft); color: var(--text-primary); }
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(52,152,219,0.22), rgba(52,152,219,0.08));
+  color: var(--color-accent);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(52,152,219,0.28);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: -1rem; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 22px;
+  background: var(--color-accent);
+  border-radius: 0 3px 3px 0;
+}
+
+.sidebar-footer {
+  margin-top: 1rem; padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: .65rem;
+}
+.sidebar-footer-btns { display: flex; gap: .5rem; }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px; cursor: pointer;
+  font-size: .95rem; color: var(--text-primary);
+  transition: border-color .15s, background .15s, color .15s;
+  padding: 0;
+}
+.icon-btn:hover      { border-color: var(--color-accent); color: var(--color-accent); }
+.icon-btn-danger:hover { border-color: var(--color-red); color: var(--color-red); }
+
+.user-chip {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .45rem .5rem;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .95rem; flex-shrink: 0;
+}
+.user-meta { display: flex; flex-direction: column; line-height: 1.15; flex: 1; min-width: 0; }
+.user-nome {
+  font-size: .85rem; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-role {
+  font-size: .65rem; color: var(--color-accent);
+  font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+}
+.user-role-user {
+  font-size: .65rem; color: var(--text-muted);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* ---- Sidebar mobile ---- */
+.sidebar-toggle {
+  display: none; position: fixed;
+  top: max(3rem, calc(env(safe-area-inset-top,0px) + .75rem));
+  left: max(1rem, env(safe-area-inset-left,1rem));
+  z-index: 110;
+  width: 48px; height: 48px;
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px; cursor: pointer;
+  backdrop-filter: blur(10px);
+  flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+}
+.sidebar-toggle span {
+  display: block; width: 18px; height: 2px;
+  background: var(--text-primary); border-radius: 2px;
+  transition: transform .22s ease, opacity .15s ease;
+}
+.sidebar-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sidebar-toggle.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.sidebar-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.sidebar-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index: 99;
+}
+.sidebar-backdrop.show { display: block; }
+
+/* ====================================================
+   MAIN LAYOUT
+   ==================================================== */
+.app-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+}
+.app-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 2rem 3rem;
+}
+
+@media (max-width: 960px) {
+  .sidebar { transform: translateX(-100%); box-shadow: 0 0 40px rgba(0,0,0,.5); }
+  .sidebar.open { transform: translateX(0); }
+  .app-main { margin-left: 0; }
+  .app-container { padding: 4.5rem 1rem 2rem; }
+  .sidebar-toggle { display: flex; }
+}
+@media (max-width: 480px) {
+  .app-container { padding: 4rem .65rem 2.5rem; }
+}
+
+/* ====================================================
+   PAGE HEADER
+   ==================================================== */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;
+}
+.page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.page-subtitle { margin: .25rem 0 0; color: var(--text-muted); font-size: .88rem; }
+
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .page-header > button,
+  .page-header > div { width: 100%; }
+  .page-header > div { flex-wrap: wrap; }
+  .page-header > div > a,
+  .page-header > div > button { flex: 1; min-width: 0; justify-content: center; }
+  .page-header h1 { font-size: 1.25rem; }
+}
+
+/* ====================================================
+   STATS CARDS
+   ==================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.stats-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.stats-grid--5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 900px) {
+  .stats-grid--5 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .stats-grid--3, .stats-grid--5 { grid-template-columns: 1fr 1fr; }
+}
+
+.dash-section-label {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin: 1.4rem 0 .5rem;
+}
+.stat-card {
+  display: flex; flex-direction: column;
+  padding: 1.1rem 1.25rem;
+  background: var(--bg-elev-1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-accent);
+  transition: transform .2s, box-shadow .2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); }
+.stat-card--blue   { border-left-color: var(--color-accent); }
+.stat-card--purple { border-left-color: var(--color-purple); }
+.stat-card--orange { border-left-color: var(--color-orange); }
+.stat-card--green  { border-left-color: var(--color-green); }
+.stat-card--teal   { border-left-color: var(--color-teal); }
+
+.stat-label {
+  font-size: .68rem; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .07em; font-weight: 600;
+}
+.stat-value {
+  font-size: 2rem; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.03em;
+  margin: .2rem 0 .15rem; line-height: 1.1;
+}
+.stat-sub { font-size: .75rem; color: var(--text-muted); }
+
+/* ====================================================
+   SECTION CARD
+   ==================================================== */
+.section-card {
+  padding: 1.5rem;
+  background: var(--bg-elev-1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+}
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+.section-card h3 { margin: 0 0 1rem; font-size: .95rem; font-weight: 700;
+  padding-bottom: .75rem; border-bottom: 1px solid var(--border-soft); }
+.section-header h3 { margin: 0; border: none; padding: 0; }
+
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; margin-top: 1.2rem;
+}
+
+/* ====================================================
+   TOOLBAR / FILTROS
+   ==================================================== */
+.toolbar {
+  display: flex; gap: .5rem; align-items: center;
+  flex-wrap: wrap; margin-bottom: 1rem;
+}
+.search-input, .filter-select {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  font-family: inherit !important;
+  font-size: .9rem !important;
+  padding: .55rem .85rem;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+.search-input:focus, .filter-select:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.15) !important;
+  outline: none !important;
+}
+.search-input { flex: 1; min-width: 180px; width: auto !important; }
+.filter-select { min-width: 130px; width: auto !important; }
+.count-label { font-size: .78rem; color: var(--text-muted); white-space: nowrap; margin-left: auto; }
+
+@media (max-width: 600px) {
+  .toolbar { flex-direction: column; }
+  .search-input, .filter-select { width: 100%; min-width: unset; }
+  .count-label { margin-left: 0; }
+}
+
+/* ====================================================
+   TABLES
+   ==================================================== */
+.table-wrapper {
+  overflow-x: auto;
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  margin-bottom: 1.25rem;
+}
+.table-wrapper::-webkit-scrollbar { height: 6px; }
+.table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: .9rem;
+  min-width: 700px; /* força scroll horizontal antes de comprimir colunas */
+}
+table thead { background: var(--bg-elev-2); }
+table th {
+  font-size: .72rem !important; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-muted) !important;
+  font-weight: 700; padding: .85rem 1rem !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  text-align: left; white-space: nowrap;
+}
+table td {
+  padding: .85rem 1rem !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  color: var(--text-primary); vertical-align: middle;
+}
+table tbody tr:last-child td { border-bottom: none !important; }
+table tbody tr:hover { background: var(--border-soft); }
+
+.col-id { color: var(--text-muted); font-size: .8rem; width: 44px; }
+.text-muted { color: var(--text-muted); }
+.obs-cell { max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-serial { }
+.col-versao { width: 65px; }
+
+/* cabeçalhos ordenáveis */
+th[data-sort] { cursor: pointer; user-select: none; white-space: nowrap; }
+th[data-sort]:hover { color: var(--color-accent); }
+.sort-ico { font-size: .7em; opacity: .45; margin-left: .2rem; }
+th[data-sort]:hover .sort-ico { opacity: .85; }
+.col-edn    { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.col-dev    { }
+
+code {
+  font-size: .82rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border-soft);
+  padding: .12rem .42rem; border-radius: 5px;
+  color: #7ec8e3;
+}
+.serial { letter-spacing: .04em; word-break: break-all; }
+
+.no-results {
+  padding: 2rem; text-align: center;
+  color: var(--text-muted); font-size: .9rem;
+}
+
+/* ====================================================
+   BADGES
+   ==================================================== */
+.badge {
+  display: inline-block;
+  font-size: .7rem; padding: 3px 10px;
+  border-radius: 100px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  white-space: nowrap;
+}
+.badge--green  { background: rgba(39,174,96,.18);   color: #58d68d; }
+.badge--blue   { background: rgba(52,152,219,.18);  color: #5dade2; }
+.badge--purple { background: rgba(155,89,182,.18);  color: #c39bd3; }
+.badge--orange { background: rgba(243,156,18,.18);  color: #f4d03f; }
+.badge--teal   { background: rgba(26,188,156,.18);  color: #48c9b0; }
+.badge--gray   { background: rgba(127,140,141,.15); color: #95a5a6; }
+.badge--red    { background: rgba(231,76,60,.18);   color: #e74c3c; }
+.badge--indigo { background: rgba(90,109,213,.18);  color: #8fa3f5; }
+
+/* ====================================================
+   BUTTONS
+   ==================================================== */
+/* altura base de todos os botoes: 38px */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: .4rem;
+  width: auto; text-decoration: none;
+  height: 38px; padding: 0 1.2rem; border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  color: #fff; border: none; cursor: pointer;
+  font-size: .9rem; font-weight: 600; font-family: inherit;
+  transition: filter .15s, transform .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+.btn-primary:hover { filter: brightness(1.1); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: .4rem;
+  width: auto; text-decoration: none;
+  height: 38px; padding: 0 1rem; border-radius: 10px;
+  background: var(--bg-elev-2); color: var(--text-primary);
+  border: 1px solid var(--border-mid); cursor: pointer;
+  font-size: .9rem; font-weight: 500; font-family: inherit;
+  transition: border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+.btn-sm {
+  display: inline-flex !important; align-items: center !important; gap: .3rem;
+  width: auto !important; height: 30px !important; padding: 0 .75rem !important; border-radius: 8px !important;
+  font-size: .78rem !important; font-weight: 600; font-family: inherit;
+  background: var(--bg-elev-2) !important; border: 1px solid var(--border-soft) !important;
+  color: var(--text-secondary) !important; cursor: pointer;
+  text-decoration: none; white-space: nowrap;
+  transition: border-color .15s, color .15s;
+  box-shadow: none !important; margin: 0 !important;
+}
+.btn-sm:hover { border-color: var(--color-accent) !important; color: var(--color-accent) !important; }
+
+/* botoes icone nas tabelas: 32x32 */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+  border-radius: 8px; cursor: pointer;
+  font-size: .88rem; color: var(--text-secondary);
+  transition: all .15s; font-weight: 500; line-height: 1;
+  vertical-align: middle;
+}
+.btn-edit:hover { border-color: var(--color-accent);  color: var(--color-accent);  transform: translateY(-1px); }
+.btn-del:hover  { border-color: var(--color-red);    color: var(--color-red);    background: rgba(231,76,60,0.08); }
+.btn-view:hover { border-color: var(--color-teal);   color: var(--color-teal);   transform: translateY(-1px); }
+.btn-link:hover { border-color: var(--color-orange); color: var(--color-orange); transform: translateY(-1px); }
+
+/* cel de acoes: grid flexível */
+.col-actions { text-align: right; width: 76px; min-width: 76px; vertical-align: middle; white-space: nowrap; }
+.actions-grid { display: inline-grid; grid-template-columns: 32px 32px; gap: 3px; justify-content: end; }
+.actions-grid form { display: contents; }
+/* quando tem 3 ou mais botões numa linha (ex: usuarios) */
+.actions-grid--3 { grid-template-columns: 32px 32px 32px; }
+.col-actions:has(.actions-grid--3) { width: 108px; min-width: 108px; }
+/* garantir que submit dentro de actions-grid seja identico ao btn-icon */
+.col-actions button[type="submit"] {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 32px !important; height: 32px !important; padding: 0 !important;
+  background: var(--bg-elev-2) !important; border: 1px solid var(--border-soft) !important;
+  border-radius: 8px !important; cursor: pointer !important;
+  font-size: .88rem !important; color: var(--text-secondary) !important;
+  transition: all .15s !important; line-height: 1 !important;
+  vertical-align: middle !important; margin: 0 !important;
+  box-shadow: none !important;
+}
+.col-actions button[type="submit"]:hover {
+  border-color: var(--color-red) !important; color: var(--color-red) !important;
+  background: rgba(231,76,60,0.08) !important;
+}
+/* forms com display:contents — botoes herdam flex do pai, nao do form */
+form[style*="display:contents"] button { width: auto !important; }
+
+.w-full { width: 100%; justify-content: center; }
+
+/* ====================================================
+   DATA VIEW (modal de detalhes + copy)
+   ==================================================== */
+.data-view { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .5rem; }
+.data-row {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .5rem .7rem; border-radius: 8px;
+  background: var(--bg-elev-2); border: 1px solid var(--border-soft);
+}
+.data-label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-muted);
+  min-width: 75px; flex-shrink: 0;
+}
+.data-value { flex: 1; font-size: .88rem; color: var(--text-primary); word-break: break-all; }
+.audit-detail-text { white-space: pre-wrap; line-height: 1.5; font-size: .85rem; }
+.btn-copy {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border-soft);
+  border-radius: 6px; cursor: pointer; font-size: .75rem;
+  color: var(--text-muted); transition: all .15s; font-family: inherit;
+}
+.btn-copy:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.btn-copy.copied { border-color: var(--color-green); color: var(--color-green); }
+
+/* ====================================================
+   FORMS / INPUTS
+   ==================================================== */
+input, select, textarea {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.15) !important;
+  outline: none !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+label { color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: .6rem; }
+
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem 1.1rem; }
+@media (max-width: 540px) { .form-grid-2 { grid-template-columns: 1fr; } }
+.form-grid-2 .full-width { grid-column: 1 / -1; }
+
+/* ====================================================
+   ALERTS
+   ==================================================== */
+.alert {
+  padding: .85rem 1.1rem; border-radius: 10px;
+  margin-bottom: 1.25rem; font-size: .9rem;
+  display: flex; align-items: center; gap: .55rem;
+}
+.alert-error   { background: rgba(231,76,60,.12);  border: 1px solid rgba(231,76,60,.35);  color: #f5a097; }
+.alert-success { background: rgba(39,174,96,.12);  border: 1px solid rgba(39,174,96,.35);  color: #58d68d; }
+
+/* ====================================================
+   LOGIN
+   ==================================================== */
+.login-main {
+  min-height: 100vh; display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(52,152,219,0.12), transparent 50%),
+    #0f1419;
+}
+.login-card {
+  width: 100%; max-width: 400px;
+  background: var(--bg-elev-1);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  margin: 1rem;
+}
+.login-main { padding: 1rem; }
+.login-brand { text-align: center; margin-bottom: 1.75rem; }
+.login-brand p { color: var(--text-muted); font-size: .88rem; margin: .25rem 0 0; }
+.login-brand h2 { margin: .3rem 0 .2rem; font-size: 1.4rem; }
+.brand-icon-lg {
+  display: inline-grid; place-items: center;
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  color: #fff; border-radius: 14px;
+  font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem;
+  box-shadow: 0 4px 20px rgba(52,152,219,0.35);
+}
+
+/* ====================================================
+   DIALOGS
+   ==================================================== */
+dialog {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev-1);
+  backdrop-filter: blur(20px);
+  color: var(--text-primary);
+  max-width: 640px; width: 95vw;
+  padding: 0;
+}
+dialog::backdrop { background: rgba(0,0,0,.6); backdrop-filter: blur(4px); }
+dialog article { background: transparent; border: none; padding: 0; }
+dialog header {
+  padding: 1.2rem 2.2rem; margin-bottom: 0;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-primary);
+}
+dialog header h4 { margin: 0; font-size: 1rem; font-weight: 600; }
+dialog form { padding: 1.4rem 2.4rem; max-height: 70vh; overflow-y: auto; }
+dialog article > .data-view { padding: 1.2rem 2.4rem; max-height: 70vh; overflow-y: auto; }
+dialog form label { margin-bottom: .3rem; font-size: .88rem; }
+dialog form > label { margin-top: .6rem; }
+dialog form label input,
+dialog form label select,
+dialog form label textarea { margin-top: .3rem !important; margin-bottom: 0 !important; }
+dialog form .form-grid-2 { gap: .7rem 1.3rem; }
+dialog footer {
+  padding: 1rem 2.4rem;
+  display: flex; gap: .6rem; justify-content: flex-end; align-items: center;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: nowrap;
+  background: transparent; margin: 0;
+}
+dialog footer button,
+dialog footer a,
+dialog footer .btn-primary,
+dialog footer .btn-secondary {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: .5rem 1.1rem !important;
+  font-size: .85rem !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 768px) {
+  dialog { width: calc(100vw - 2rem) !important; max-width: 480px !important; margin: auto !important; }
+}
+@media (max-width: 480px) {
+  dialog { width: 100vw !important; max-width: 100vw !important;
+    max-height: 100dvh !important; margin: 0 !important;
+    border-radius: 0 !important; border-left: none !important; border-right: none !important; }
+  dialog footer { flex-direction: column; }
+  dialog footer button { width: 100%; }
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+}
+
+/* ====================================================
+   SENHA MASK / LEGENDA / MISC
+   ==================================================== */
+.senha-mask {
+  cursor: pointer; color: var(--text-muted);
+  font-size: .82rem; user-select: none; letter-spacing: .05em;
+}
+.senha-mask:hover { color: var(--color-accent); }
+
+.legenda-grid { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; font-size: .78rem; color: var(--text-muted); }
+.legenda-item { display: flex; align-items: center; gap: .4rem; }
+
+/* ====================================================
+   SCROLLBAR
+   ==================================================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+
+/* ====================================================
+   AUXILIARES
+   ==================================================== */
+.aux-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+.aux-card {
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem;
+  display: flex; flex-direction: column; gap: .8rem;
+  backdrop-filter: blur(24px);
+}
+.aux-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+.aux-card-title { font-weight: 600; font-size: .9rem; color: var(--text-secondary); display: flex; align-items: center; gap: .4rem; }
+.aux-list { display: flex; flex-direction: column; gap: .3rem; min-height: 36px; }
+.aux-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .28rem .55rem; border-radius: 6px;
+  background: var(--bg-elev-2);
+  font-size: .875rem; color: var(--text-secondary);
+}
+.aux-item form { display: contents; }
+.aux-empty { color: var(--text-muted); font-size: .82rem; margin: 0; padding: .25rem 0; }
+
+/* botao de excluir item da lista */
+.aux-del-btn {
+  background: none !important; border: none !important; cursor: pointer; padding: 0 !important;
+  width: 20px !important; height: 20px !important; border-radius: 4px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  font-size: .75rem !important; color: var(--text-muted) !important; font-family: inherit;
+  box-shadow: none !important; margin: 0 !important;
+  transition: color .12s, background .12s;
+  flex-shrink: 0;
+}
+.aux-del-btn:hover { color: var(--color-red) !important; background: rgba(231,76,60,0.12) !important; }
+
+/* form de adicionar — coluna: input acima, botao abaixo */
+.aux-add-form {
+  margin-top: auto;
+  padding-top: .65rem;
+  border-top: 1px solid var(--border-soft);
+}
+.aux-add-row { display: flex; flex-direction: column; gap: .45rem; }
+/* o input usa o estilo global normal — sem overrides especiais */
+.aux-add-btn {
+  width: 100%; height: 34px;
+  background: var(--color-accent); color: #fff;
+  border: none !important; border-radius: var(--radius-sm) !important;
+  font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  transition: filter .15s; box-shadow: none !important;
+  letter-spacing: .01em;
+}
+.aux-add-btn:hover { filter: brightness(1.13); }
+
+/* ---- Import/Export ---- */
+.ie-grid { display: flex; flex-direction: column; gap: 2.5rem; }
+.ie-section h3 { margin-bottom: .3rem; }
+.ie-cards { display: flex; flex-direction: column; gap: 1rem; }
+.ie-card {
+  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+  background: var(--bg-elev-1); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: 1.2rem 1.5rem;
+}
+.ie-card-icon { font-size: 1.6rem; flex-shrink: 0; }
+.ie-card-info { flex: 1; display: flex; flex-direction: column; gap: .15rem; }
+.ie-card-info strong { font-size: .95rem; }
+.ie-card-info small { font-size: .78rem; }
+.ie-card .btn-primary { flex-shrink: 0; white-space: nowrap; margin: 0; }
+.ie-import-actions { flex-shrink: 1; min-width: 0; }
+.ie-import-actions form {
+  display: flex; align-items: center; gap: .6rem; margin: 0; flex-wrap: wrap;
+}
+.ie-import-actions input[type="file"] {
+  width: auto !important; flex: 1 1 auto !important; min-width: 180px !important;
+  font-size: .82rem !important; padding: .35rem .5rem !important;
+  margin: 0 !important; border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-elev-2) !important; border-radius: var(--radius-sm) !important;
+}
+.ie-import-actions button[type="submit"] {
+  width: auto !important; margin: 0 !important;
+  padding: .45rem 1rem !important; font-size: .85rem !important;
+  white-space: nowrap; flex-shrink: 0;
+}
+.ie-note {
+  margin-top: 1.2rem; padding: 1rem 1.2rem;
+  background: rgba(52,152,219,.08); border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm); font-size: .85rem;
+}
+@media (max-width: 700px) {
+  .ie-card { flex-direction: column; align-items: flex-start; }
+  .ie-import-actions { width: 100%; }
+  .ie-import-actions form { flex-direction: column; align-items: stretch; }
+  .ie-import-actions input[type="file"] { min-width: 0 !important; width: 100% !important; }
+}
+
+/* ====================================================
+   MOBILE: toque, tabelas, dialogs
+   ==================================================== */
+@media (max-width: 600px) {
+  /* Touch targets maiores */
+  .btn-icon, .col-actions button[type="submit"] {
+    width: 38px !important; height: 38px !important; font-size: .95rem !important;
+  }
+  .actions-grid { grid-template-columns: 38px 38px; gap: 4px; }
+
+  /* Data rows empilham label/valor */
+  .data-row { flex-wrap: wrap; }
+  .data-label { min-width: unset; width: 100%; }
+
+  /* Dialog footers empilham */
+  dialog footer { flex-wrap: wrap; gap: .5rem; }
+  dialog footer button,
+  dialog footer a,
+  dialog footer .btn-primary,
+  dialog footer .btn-secondary { flex: 1 1 auto !important; justify-content: center; text-align: center; }
+  /* Links de historico no footer ocupam largura total */
+  dialog footer a { width: 100% !important; margin-right: 0 !important; }
+
+  /* Dialog padding menor */
+  dialog header { padding: 1rem 1.2rem; }
+  dialog form { padding: 1rem 1.2rem; }
+  dialog article > .data-view { padding: 1rem 1.2rem; }
+  dialog footer { padding: .75rem 1.2rem; }
+
+  /* Pagination empilha */
+  .pagination { flex-direction: column; gap: .5rem; }
+
+  /* col-actions: manter compacta mesmo no mobile (tabela rola horizontalmente) */
+
+  /* Stat cards menores */
+  .stat-value { font-size: 1.5rem; }
+  .stat-label { font-size: .62rem; }
+}
+
+/* ====================================================
+   Cais — acréscimos ao design system herdado
+   do CtrlLicença. Tudo abaixo desta linha é específico
+   deste projeto; o restante do arquivo é compartilhado.
+   ==================================================== */
+
+/* Variante faltante: container parado pede vermelho. */
+.stat-card--red { border-left-color: var(--color-red); }
+
+/* Alertas em pt-BR, alinhados ao campo Flash.Tipo do Go.
+   O arquivo herdado só trazia -error/-success em inglês. */
+.alert-erro    { background: rgba(231,76,60,.12);  border: 1px solid rgba(231,76,60,.35);  color: #f5a097; }
+.alert-sucesso { background: rgba(39,174,96,.12);  border: 1px solid rgba(39,174,96,.35);  color: #58d68d; }
+.alert-aviso   { background: rgba(243,156,18,.12); border: 1px solid rgba(243,156,18,.35); color: #f5c57f; }
+
+/* Texto secundário em tabelas e parágrafos de apoio. */
+.muted { color: var(--text-muted); }
+small.muted { font-size: .78rem; }
+
+/* ---- Indicador de conexão com o daemon ----
+   Ocupa no rodapé da sidebar o lugar que no CtrlLicença
+   era do user-chip; reaproveita a mesma caixa. */
+.daemon-chip {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .45rem .55rem;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.daemon-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.daemon-ok  .daemon-dot { background: var(--color-green); box-shadow: 0 0 0 3px rgba(39,174,96,.18); }
+.daemon-off .daemon-dot { background: var(--color-red);   box-shadow: 0 0 0 3px rgba(231,76,60,.18); }
+.daemon-meta { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.daemon-estado {
+  font-size: .8rem; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.daemon-versao {
+  font-size: .65rem; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---- Lista de diagnóstico da página de erro do Docker ---- */
+.diagnostico { margin: .5rem 0 1.25rem 1.1rem; }
+.diagnostico li { margin-bottom: .4rem; font-size: .9rem; color: var(--text-secondary); }
+
+/* ====================================================
+   Refinamento tipográfico — Cais
+   ----------------------------------------------------
+   O design herdado usava rótulos de .65–.72rem em caixa
+   alta com letter-spacing largo e pesos 700/800. Funciona
+   num painel denso, mas lido o dia inteiro fica cansativo
+   e "apertado". Aqui o texto cresce, perde a caixa alta
+   decorativa e os pesos caem para 500/600.
+   ==================================================== */
+
+/* ---- Cabeçalho de página ---- */
+.page-header h1      { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.02em; }
+.page-subtitle,
+.page-sub            { margin: .35rem 0 0; color: var(--text-muted); font-size: var(--fs-sm); }
+
+/* ---- Barra lateral ---- */
+.nav-section-label {
+  font-size: var(--fs-xs);
+  text-transform: none;      /* era uppercase + .1em de tracking */
+  letter-spacing: 0;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.nav-item          { font-size: var(--fs-sm); font-weight: 500; }
+.nav-ico           { font-size: 1.05rem; opacity: .9; }
+.brand-text strong { font-size: var(--fs-lg); font-weight: 600; }
+.brand-text small  { font-size: var(--fs-xs); }
+.brand-icon        { font-weight: 600; }
+
+/* ---- Cards de número ---- */
+.stat-label {
+  font-size: var(--fs-xs);
+  text-transform: none;      /* era uppercase + .07em */
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.stat-value { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.025em; }
+.stat-sub   { font-size: var(--fs-xs); }
+.stat-card small.muted { display: block; margin-top: .15rem; font-size: var(--fs-xs); }
+
+/* ---- Seções ----
+   O CSS herdado só estiliza h3; os templates deste projeto usam h2. */
+.section-card h2,
+.section-card h3,
+.section-header h2 {
+  margin: 0 0 1rem;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+.section-header h2 { margin: 0; border: none; padding: 0; }
+
+/* ---- Tabelas ---- */
+table th {
+  font-size: var(--fs-xs) !important;
+  text-transform: none !important;   /* era uppercase + .07em */
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+}
+table td      { font-size: var(--fs-sm); line-height: 1.5; }
+table td small, small.muted { font-size: var(--fs-xs); }
+.sort-ico     { font-size: .75em; opacity: .4; }
+
+/* ---- Etiquetas de estado ---- */
+.badge {
+  font-size: var(--fs-xs);
+  text-transform: none;       /* era uppercase */
+  letter-spacing: 0;
+  font-weight: 600;
+  padding: 3px 9px;
+}
+
+/* ---- Controles ---- */
+button, input, select, textarea { font-family: var(--font-sans); }
+input[type="search"], input[type="text"] { font-size: var(--fs-sm) !important; }
+.alert { font-size: var(--fs-sm); line-height: 1.5; }
+
+/* ---- Indicador do daemon ---- */
+.daemon-estado { font-size: var(--fs-sm); font-weight: 500; }
+.daemon-versao { font-size: var(--fs-xs); }
+
+/* ---- Diagnóstico ---- */
+.diagnostico li { font-size: var(--fs-sm); }
+
+/* ====================================================
+   Limpeza visual — Cais
+   ----------------------------------------------------
+   O tema herdado é "dark glassmorphism": blur, gradientes
+   nos itens ativos, sombras fortes e borda em tudo. Aqui
+   as superfícies ficam chapadas, a borda vira exceção e a
+   hierarquia passa a vir de espaçamento e contraste.
+   ==================================================== */
+
+:root {
+  --bg-base:   #0d1117;
+  --bg-elev-1: #161b22;
+  --bg-elev-2: #1c222b;
+  --bg-input:  #11161d;
+  --border-soft: rgba(255,255,255,0.07);
+  --border-mid:  rgba(255,255,255,0.12);
+  --text-primary:   #e8edf3;
+  --text-secondary: #aab4c0;
+  --text-muted:     #7d8894;   /* era #6a7385 — contraste baixo demais */
+  --color-accent:   #2496ed;   /* azul oficial do Docker */
+  --color-accent-2: #1b7fd0;
+  --shadow-card: none;
+}
+
+/* Este bloco precisa redeclarar TODA cor de texto que o :root acima define.
+   `:root` e `[data-theme="light"]` têm a mesma especificidade, então vale a
+   ordem no arquivo — e este bloco vem depois do tema claro original. Omitir
+   --text-primary aqui deixava texto quase branco sobre fundo branco. */
+[data-theme="light"] {
+  --bg-base:   #f7f8fa;
+  --bg-elev-1: #ffffff;
+  --bg-elev-2: #f2f4f7;
+  --bg-input:  #ffffff;
+  --border-soft: rgba(16,24,40,0.08);
+  --border-mid:  rgba(16,24,40,0.14);
+  --text-primary:   #101828;
+  --text-secondary: #475467;
+  --text-muted:     #667085;
+  --shadow-card: none;
+}
+
+/* Verde e vermelho do tema escuro não têm contraste suficiente no claro. */
+[data-theme="light"] .badge--green  { color: #15803d !important; }
+[data-theme="light"] .badge--red    { color: #b42318 !important; }
+[data-theme="light"] .badge--orange { color: #b54708 !important; }
+
+/* ---- Ícones ---- */
+.ico {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: -3px;
+}
+.nav-item .ico { width: 19px; height: 19px; opacity: .85; }
+.nav-item.active .ico { opacity: 1; }
+
+/* ---- Barra lateral ---- */
+.sidebar {
+  background: var(--bg-elev-1);
+  backdrop-filter: none;           /* o blur custava caro e borrava o texto */
+  -webkit-backdrop-filter: none;
+  padding: 1.5rem 1rem 1rem;
+}
+[data-theme="light"] .sidebar { background: #fff; }
+
+.brand-icon {
+  background: var(--color-accent);  /* era gradiente */
+  box-shadow: none;
+  border-radius: 10px;
+  width: 38px; height: 38px;
+  font-size: 1rem;
+}
+
+.nav-item.active {
+  background: var(--bg-elev-2);     /* era gradiente azul + ring interno */
+  color: var(--text-primary);
+  box-shadow: none;
+  font-weight: 600;
+}
+.nav-item.active::before { background: var(--color-accent); height: 18px; left: -.6rem; }
+.nav-item:hover { background: var(--bg-elev-2); }
+
+/* ---- Cartões ---- */
+.section-card, .stat-card {
+  background: var(--bg-elev-1);
+  box-shadow: none;
+  border: 1px solid var(--border-soft);
+}
+.stat-card:hover  { transform: none; box-shadow: none; border-color: var(--border-mid); }
+.section-card     { padding: 1.35rem 1.5rem; }
+
+/* ---- Tabelas: menos linha, mais respiro ---- */
+.table-wrapper { border: none; background: transparent; }
+table          { border-collapse: collapse; }
+table thead th {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border-mid) !important;
+  padding: .55rem .85rem !important;
+}
+table tbody td {
+  border-bottom: 1px solid var(--border-soft);
+  padding: .85rem;
+  vertical-align: middle;
+}
+table tbody tr:last-child td { border-bottom: none; }
+table tbody tr:hover         { background: var(--bg-elev-2); }
+
+/* ---- Estado: ponto + texto, em vez de pílula preenchida ---- */
+.badge {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  display: inline-flex; align-items: center; gap: .4rem;
+  color: var(--text-secondary) !important;
+}
+.badge::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+.badge--green  { color: #3fb950 !important; }
+.badge--red    { color: #f85149 !important; }
+.badge--orange { color: #d29922 !important; }
+.badge--gray   { color: var(--text-muted) !important; }
+
+/* ---- Portas, uma por linha, em fonte mono ---- */
+.col-portas .porta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+/* ---- Ações: três colunas fixas (eram duas, e o 3º botão quebrava linha) ---- */
+.acoes {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  gap: .4rem;
+  justify-content: start;
+}
+.acoes form { display: contents; }
+.btn-icon {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 !important;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.btn-icon:hover { border-color: var(--border-mid); color: var(--text-primary); background: var(--bg-elev-2); }
+.btn-icon--perigo:hover { border-color: #f85149; color: #f85149; background: rgba(248,81,73,.08); }
+.btn-icon-vazio { width: 32px; height: 32px; }   /* mantém o alinhamento da coluna */
+
+/* ---- Barra de filtro: input não precisa ocupar a largura toda ---- */
+.toolbar input[type="search"] {
+  max-width: 340px;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 8px !important;
+}
+.toolbar input[type="search"]:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* ---- Legenda ---- */
+.legenda {
+  display: flex; flex-wrap: wrap; gap: 1.1rem;
+  margin: 1rem 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+.legenda span      { display: inline-flex; align-items: center; gap: .35rem; }
+.legenda .ico      { width: 14px; height: 14px; }
+
+/* ---- Indicador do daemon ---- */
+.daemon-chip { background: transparent; border: none; padding: .3rem .25rem; }
+.daemon-dot  { box-shadow: none !important; }
+
+/* ---- Respiro geral ---- */
+.app-container { padding-top: 2rem; padding-bottom: 2.5rem; }
+.page-header   { margin-bottom: 1.75rem; }
+.stats-grid    { gap: 1rem; margin-bottom: 1.75rem; }
+
+/* ====================================================
+   Menu retrátil
+   ----------------------------------------------------
+   Estado em .sidebar-retraida no <html>, aplicado antes
+   da primeira pintura para a barra não "pular" de largura.
+   ==================================================== */
+
+:root { --sidebar-retraida: 68px; }
+
+.sidebar-brand { display: flex; align-items: center; gap: .5rem; }
+.brand-link    { flex: 1; min-width: 0; }
+
+.colapsar {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; border-radius: 7px;
+  color: var(--text-muted); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.colapsar:hover { background: var(--bg-elev-2); color: var(--text-primary); }
+.colapsar .ico  { width: 17px; height: 17px; }
+
+html.sidebar-retraida .sidebar     { width: var(--sidebar-retraida); padding-left: .65rem; padding-right: .65rem; }
+html.sidebar-retraida .app-main    { margin-left: var(--sidebar-retraida); }
+html.sidebar-retraida .brand-text,
+html.sidebar-retraida .nav-text,
+html.sidebar-retraida .nav-section-label,
+html.sidebar-retraida .daemon-meta { display: none; }
+
+html.sidebar-retraida .sidebar-brand { flex-direction: column; gap: .5rem; }
+html.sidebar-retraida .brand-link    { justify-content: center; }
+html.sidebar-retraida .colapsar .ico { transform: rotate(180deg); }
+
+html.sidebar-retraida .nav-item {
+  justify-content: center;
+  padding: .7rem 0;
+}
+html.sidebar-retraida .nav-item.active::before { left: -.65rem; }
+html.sidebar-retraida .sidebar-footer      { align-items: center; }
+html.sidebar-retraida .sidebar-footer-btns { justify-content: center; }
+html.sidebar-retraida .daemon-chip         { justify-content: center; padding: .3rem 0; }
+
+/* Dica flutuante no lugar do rótulo escondido. Usa data-dica para não
+   depender do title nativo, que demora ~1s para aparecer. */
+html.sidebar-retraida .nav-item { position: relative; }
+html.sidebar-retraida .nav-item::after {
+  content: attr(data-dica);
+  position: absolute; left: calc(100% + .55rem); top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-elev-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-mid);
+  padding: .3rem .6rem; border-radius: 7px;
+  font-size: var(--fs-xs); white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .12s;
+  z-index: 120;
+}
+html.sidebar-retraida .nav-item:hover::after { opacity: 1; }
+
+/* ====================================================
+   Tela de configurações — paleta de cores
+   ==================================================== */
+
+.paleta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .6rem;
+  margin: 1rem 0 1.5rem;
+}
+.cor-opcao {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .6rem .75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.cor-opcao:hover       { background: var(--bg-elev-2); }
+.cor-opcao input       { position: absolute; opacity: 0; width: 0; height: 0; }
+.cor-opcao.selecionada { border-color: var(--color-accent); background: var(--bg-elev-2); }
+.cor-amostra  { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; }
+.cor-nome     { font-size: var(--fs-sm); }
+
+.cor-custom label { display: block; font-size: var(--fs-sm); color: var(--text-secondary); margin-bottom: .5rem; }
+.cor-custom-linha { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.cor-custom-linha input[type="color"] {
+  width: 46px !important; height: 34px; padding: 2px !important;
+  border: 1px solid var(--border-soft) !important; border-radius: 8px !important;
+  background: var(--bg-input) !important; cursor: pointer;
+}
+.cor-custom-linha code { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.form-acoes { margin-top: 1.5rem; }
+
+/* ---- Lista de dados (conexão) ---- */
+.dados       { margin: 1rem 0 1.25rem; display: grid; gap: .7rem; }
+.dados > div { display: grid; grid-template-columns: 200px 1fr; gap: 1rem; align-items: baseline; }
+.dados dt    { font-size: var(--fs-sm); color: var(--text-muted); }
+.dados dd    { margin: 0; font-size: var(--fs-sm); }
+.dados code  { font-size: var(--fs-xs); background: var(--bg-elev-2); padding: .15rem .45rem; border-radius: 5px; }
+
+@media (max-width: 640px) {
+  .dados > div { grid-template-columns: 1fr; gap: .15rem; }
+}
+
+/* ====================================================
+   Produtividade
+   ==================================================== */
+
+/* Porta publicada vira link: um clique abre o serviço no navegador. */
+a.porta {
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: .3rem;
+  color: var(--color-accent);
+}
+a.porta:hover    { text-decoration: underline; }
+a.porta .ico     { width: 11px; height: 11px; opacity: .7; }
+
+/* Botão de copiar o ID, aparece ao passar o mouse na linha. */
+.copiar-id {
+  background: none; border: none; padding: 0 0 0 .3rem;
+  color: var(--text-muted); cursor: pointer;
+  opacity: 0; transition: opacity .15s, color .15s;
+  vertical-align: -2px;
+}
+tr:hover .copiar-id  { opacity: 1; }
+.copiar-id:hover     { color: var(--color-accent); }
+.copiar-id .ico      { width: 13px; height: 13px; }
+
+/* Filtros rápidos de estado. */
+.chips      { display: flex; gap: .4rem; flex-wrap: wrap; }
+.chip {
+  padding: .3rem .7rem; border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: transparent; color: var(--text-secondary);
+  font-size: var(--fs-xs); cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.chip:hover  { background: var(--bg-elev-2); }
+.chip.ativo  { border-color: var(--color-accent); color: var(--color-accent); }
+
+.toolbar { gap: .9rem; flex-wrap: wrap; align-items: center; }
+
+/* Atalho de teclado exibido no campo de busca. */
+.atalho {
+  font-family: var(--font-mono); font-size: .7rem;
+  border: 1px solid var(--border-soft); border-radius: 5px;
+  padding: .1rem .35rem; color: var(--text-muted);
+}
+
+/* Aviso temporário de "copiado". */
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  background: var(--bg-elev-2); color: var(--text-primary);
+  border: 1px solid var(--border-mid);
+  padding: .55rem 1rem; border-radius: 9px;
+  font-size: var(--fs-sm);
+  opacity: 0; pointer-events: none;
+  transition: opacity .18s, transform .18s;
+  z-index: 200;
+}
+.toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Transição suave ao recolher/expandir, e cor de texto correta sobre o
+   accent escolhido (âmbar com texto branco seria ilegível). */
+.sidebar, .app-main { transition: width .18s ease, margin-left .18s ease; }
+.brand-icon { color: var(--accent-texto, #fff) !important; }
+
+/* Caixa de "atualizar sozinho" na barra de filtros. */
+.auto-refresh {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: var(--fs-xs); color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap;
+}
+.auto-refresh input { width: auto !important; margin: 0 !important; cursor: pointer; }
+.toolbar #contador  { margin-left: auto; }
+
+/* ====================================================
+   Correções finais
+   ==================================================== */
+
+/* O CSS herdado deixa .sidebar-nav com justify-content: space-between, o que
+   espalha os itens pela altura inteira da barra. Com 7 itens e uma tela de
+   1080px, os ícones ficavam a 80px um do outro. */
+.sidebar-nav { justify-content: flex-start !important; }
+
+/* Pico aplica width:100% em todo button; o Salvar virava uma faixa. */
+.form-acoes .btn-primary,
+.btn-primary { width: auto !important; }
+
+/* ====================================================
+   Responsividade
+   ----------------------------------------------------
+   Dois problemas do layout herdado:
+   - em telas grandes, o teto de 1400px deixava faixas
+     vazias enormes (num monitor 2560 sobravam ~430px
+     de cada lado);
+   - abaixo de 960px a barra lateral vira gaveta, mas o
+     estado "retraída" continuava aplicando margem à
+     esquerda e empurrava o conteúdo para fora da tela.
+   ==================================================== */
+
+.app-container {
+  /* Teto bem mais alto: é uma ferramenta de tabelas, que ganham com largura.
+     O padding cresce junto com a viewport para o conteúdo não encostar na
+     borda em telas largas. */
+  max-width: 1760px;
+  padding-left:  clamp(1rem, 2.5vw, 2.5rem);
+  padding-right: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+/* Acima de 1760px o container para de crescer, então centralizá-lo é o
+   comportamento certo; abaixo disso ele é fluido. */
+
+/* ---- Telas médias: a barra de 290px custa caro ---- */
+@media (max-width: 1280px) {
+  :root { --sidebar-width: 240px; }
+}
+
+/* ---- Abaixo de 960px a barra vira gaveta ----
+   O estado "retraída" precisa ser neutralizado aqui, senão a margem da
+   esquerda permanece e empurra o conteúdo para fora da viewport. */
+@media (max-width: 960px) {
+  html.sidebar-retraida .sidebar {
+    width: var(--sidebar-width);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  html.sidebar-retraida .app-main      { margin-left: 0; }
+  html.sidebar-retraida .brand-text,
+  html.sidebar-retraida .nav-text,
+  html.sidebar-retraida .nav-section-label,
+  html.sidebar-retraida .daemon-meta   { display: revert; }
+  html.sidebar-retraida .sidebar-brand { flex-direction: row; }
+  html.sidebar-retraida .nav-item      { justify-content: flex-start; padding: .7rem .85rem; }
+  html.sidebar-retraida .nav-item::after { content: none; }
+  html.sidebar-retraida .sidebar-footer,
+  html.sidebar-retraida .sidebar-footer-btns,
+  html.sidebar-retraida .daemon-chip   { align-items: initial; justify-content: initial; }
+
+  /* Recolher não faz sentido numa gaveta que já abre e fecha inteira. */
+  .colapsar { display: none; }
+
+  /* Espaço para o botão de menu, que é fixo no topo. */
+  .app-container { padding-top: 4.5rem; }
+}
+
+/* ---- Barra de ferramentas: empilha em vez de transbordar ---- */
+@media (max-width: 860px) {
+  .toolbar { align-items: stretch; }
+  .toolbar input[type="search"] { max-width: none; }
+  .toolbar .atalho   { display: none; }   /* não há teclado físico aqui */
+  .toolbar #contador { margin-left: 0; }
+  .chips { width: 100%; }
+  .chip  { flex: 1; text-align: center; }
+}
+
+/* ---- Tabelas: rolagem horizontal explícita ----
+   Com 6 colunas não há como caber em 390px. Em vez de espremer a ponto de
+   ficar ilegível, mantém-se a largura mínima e rola na horizontal. */
+@media (max-width: 760px) {
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrapper table { min-width: 680px; }
+  table thead th,
+  table tbody td { padding: .6rem .55rem; }
+  /* O botão de copiar depende de hover, que não existe em toque. */
+  .copiar-id { opacity: 1; }
+}
+
+@media (max-width: 520px) {
+  .page-header h1 { font-size: 1.2rem; }
+  .section-card   { padding: 1rem .9rem; }
+  .stats-grid     { grid-template-columns: 1fr 1fr; }
+  .legenda        { gap: .75rem; }
+  .paleta         { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---- Telas muito largas: aproveita o espaço nos cards ---- */
+@media (min-width: 1600px) {
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+}
+
+/* ----------------------------------------------------
+   CAUSA RAIZ da sobra de espaço em telas grandes.
+
+   O Pico CSS, no modo classless, trata <main> como um
+   container de leitura centralizado: `body>main` ganha
+   max-width por breakpoint (510px, 700px, ..., 1450px)
+   mais `margin: auto`. Num painel com barra lateral isso
+   está errado duas vezes — limita a largura útil e ainda
+   centraliza o conteúdo ignorando a barra, o que num
+   monitor de 1920px deixava 402px vazios à direita.
+
+   Quem manda na largura aqui é .app-container.
+   ---------------------------------------------------- */
+body > main.app-main {
+  max-width: none;
+  width: auto;
+  margin-right: 0;
+  padding: 0;
+}
+
+/* O botão de menu herdado ficava em top:3rem e, com 48px de altura, invadia
+   os 4,5rem de padding do conteúdo — sobrepondo o título da página. Subir
+   para 1rem resolve sem mexer no padding. */
+@media (max-width: 960px) {
+  .sidebar-toggle {
+    top: max(1rem, calc(env(safe-area-inset-top, 0px) + .75rem));
+  }
+}
+
+/* ====================================================
+   Stacks
+   ==================================================== */
+.stacks-lista { display: flex; flex-direction: column; gap: 1rem; }
+.stack-card   { padding: 1.2rem 1.35rem; }
+.stack-topo {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.stack-id h2 {
+  margin: 0 0 .3rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+}
+.caminho {
+  font-size: var(--fs-xs); color: var(--text-muted);
+  background: var(--bg-elev-2); padding: .15rem .45rem; border-radius: 5px;
+  word-break: break-all;
+}
+.stack-acoes { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+.stack-acoes form { display: contents; }
+
+/* Grid de ações com uma coluna só (imagens, volumes). */
+.acoes--1 { grid-template-columns: 32px; }
+
+/* Linha de detalhe de erro no histórico. */
+.linha-erro td { padding-top: 0 !important; border-bottom: 1px solid var(--border-soft); }
+
+/* Diálogo de cadastro. */
+dialog {
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  background: var(--bg-elev-1);
+  color: var(--text-primary);
+  max-width: 560px; width: calc(100% - 2rem);
+  padding: 1.5rem;
+}
+dialog::backdrop { background: rgba(0,0,0,.55); }
+dialog h3    { margin: 0 0 1.25rem; font-size: var(--fs-lg); }
+dialog label { display: block; margin: .9rem 0 .35rem; font-size: var(--fs-sm); color: var(--text-secondary); }
+dialog input[type="text"] {
+  width: 100%; background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important; border-radius: 8px !important;
+  font-size: var(--fs-sm) !important;
+}
+.dialog-acoes {
+  display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.5rem;
+}
+.dialog-acoes button { width: auto !important; }
+
+@media (max-width: 640px) {
+  .stack-topo  { flex-direction: column; }
+  .stack-acoes { width: 100%; }
+}
+
+/* O Pico declara `button[type=submit]{width:100%}`, especificidade (0,1,1),
+   que vence `.btn-icon` (0,1,0). Na tabela de containers o problema não
+   aparecia porque o grid de colunas de 32px já restringia a largura; num
+   container flex, como .stack-acoes, o botão esticava para 234px. */
+.btn-icon,
+.btn-icon--perigo {
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 auto;
+}
+.stack-acoes .btn-secondary { width: auto !important; }
+
+/* ====================================================
+   Marca
+   ==================================================== */
+.brand-icon {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+  /* Leve profundidade: o topo do cubo some num fundo totalmente chapado. */
+  background: linear-gradient(145deg,
+              color-mix(in srgb, var(--color-accent) 88%, white),
+              var(--color-accent-2));
+  box-shadow: 0 1px 2px rgba(0,0,0,.18);
+}
+.brand-icon svg {
+  width: 21px; height: 21px;
+  color: var(--accent-texto, #fff);
+}
+html.sidebar-retraida .brand-icon { width: 34px; height: 34px; border-radius: 10px; }
+html.sidebar-retraida .brand-icon svg { width: 19px; height: 19px; }
+
+/* ====================================================
+   Visualizador de log
+   ==================================================== */
+.log-toolbar select {
+  width: auto !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 8px !important;
+  font-size: var(--fs-xs) !important;
+  padding: .3rem .5rem !important;
+  margin: 0 !important;
+}
+.log-estado {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  display: inline-flex; align-items: center; gap: .4rem;
+}
+.log-estado::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-muted);
+}
+.log-estado.log-ok::before  { background: #3fb950; }
+.log-estado.log-off::before { background: #f85149; }
+
+.log-visor {
+  height: clamp(320px, 62vh, 760px);
+  overflow: auto;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: .75rem .9rem;
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+.log-linha      { white-space: pre; }
+.log-visor.wrap .log-linha { white-space: pre-wrap; word-break: break-word; }
+.log-out        { color: var(--text-secondary); }
+.log-err        { color: #f0836f; }
+.log-rodape     { margin: .6rem 0 0; font-size: var(--fs-xs); }
+.acoes--4 { grid-template-columns: repeat(4, 32px); }
+a.btn-icon { text-decoration: none; }
+
+/* Copiar: antes só aparecia no hover da linha, o que esconde a função de
+   quem não sabe que ela existe (e some de vez em telas de toque). Agora
+   fica sempre visível, apenas esmaecido. */
+.copiar-id          { opacity: .45 !important; }
+tr:hover .copiar-id { opacity: .8  !important; }
+.copiar-id:hover    { opacity: 1   !important; color: var(--color-accent); }
+
+/* ====================================================
+   Criação de recursos
+   ==================================================== */
+.acoes--2 { grid-template-columns: repeat(2, 32px); }
+.req      { color: #f85149; }
+
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 700px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+/* :not(.cor-opcao) é essencial: a paleta de cores usa <label> como cartão
+   clicável, e esta regra genérica (0,1,1) vencia o .cor-opcao (0,1,0),
+   transformando o cartão em bloco. A amostra de cor, deixando de ser item
+   de flex, voltava a display:inline — e elemento inline ignora width,
+   então o quadradinho de cor ficava com 0px e sumia da tela. */
+.section-card label:not(.cor-opcao) { display: block; margin: .9rem 0 .35rem; font-size: var(--fs-sm); color: var(--text-secondary); }
+.section-card label:not(.cor-opcao):first-of-type { margin-top: 0; }
+.section-card input[type="text"],
+.section-card select,
+.section-card textarea {
+  width: 100%;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 8px !important;
+  font-size: var(--fs-sm) !important;
+  margin-bottom: .35rem !important;
+}
+.section-card textarea { font-family: var(--font-mono); resize: vertical; }
+.section-card small.muted { display: block; margin-bottom: .5rem; }
+.form-acoes { display: flex; gap: .7rem; align-items: center; margin: 1.5rem 0; }
+.form-acoes .btn-secondary { width: auto !important; text-decoration: none; }
+
+/* ---- Progresso do download ---- */
+.pull-progresso { margin-top: 1rem; }
+.pull-barra {
+  height: 6px; border-radius: 3px;
+  background: var(--bg-elev-2); overflow: hidden; margin-bottom: .6rem;
+}
+.pull-barra-fill {
+  height: 100%; width: 0;
+  background: var(--color-accent);
+  transition: width .25s ease;
+}
+.pull-log {
+  max-height: 180px; overflow: auto; margin: 0;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft); border-radius: 8px;
+  padding: .55rem .7rem;
+  font-family: var(--font-mono); font-size: .75rem;
+  color: var(--text-muted); white-space: pre-wrap;
+}
+.page-header a.btn-primary { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* ====================================================
+   Diálogos — correção estrutural
+   ----------------------------------------------------
+   O Pico define `dialog { display:flex; min-width:100%;
+   min-height:100% }`: o <dialog> é a tela inteira e o
+   primeiro filho é a caixa centralizada. Um max-width no
+   próprio <dialog> não adianta, porque min-width vence
+   max-width em CSS.
+
+   Então a caixa passa a ser .dialog-box (ou o <form>, nos
+   diálogos que já usavam esse padrão).
+   ==================================================== */
+
+dialog {
+  /* Devolve ao Pico o papel de contêiner de tela cheia. */
+  max-width: none;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+dialog > .dialog-box,
+dialog > form {
+  width: min(560px, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  padding: 1.5rem !important;
+  background: var(--bg-elev-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.45);
+}
+
+dialog h3 {
+  margin: 0 0 1.25rem;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+/* Atalhos de imagem comuns. */
+.sugestoes {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .4rem;
+  margin: .9rem 0 .2rem;
+  font-size: var(--fs-xs);
+}
+
+/* Link para o catálogo do Docker Hub. */
+.dica-hub {
+  margin: .9rem 0 0;
+  font-size: var(--fs-xs);
+  padding-top: .9rem;
+  border-top: 1px solid var(--border-soft);
+}
+.dica-hub a {
+  color: var(--color-accent);
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: .3rem;
+}
+.dica-hub a:hover { text-decoration: underline; }
+.dica-hub .ico    { width: 12px; height: 12px; opacity: .75; }
+
+/* ====================================================
+   Paleta de cores — robustez e retorno visual
+   ==================================================== */
+
+/* Não depender de ser item de flex: a amostra declara o próprio display.
+   Foi o que a deixou invisível quando o pai perdeu o display:flex. */
+.cor-amostra {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+.cor-opcao {
+  display: flex; align-items: center; gap: .6rem;
+  margin: 0;
+  position: relative;
+}
+
+/* A seleção precisa ser óbvia: antes era só uma borda discreta num bloco
+   de largura total, e o usuário não percebia que havia escolhido algo. */
+.cor-opcao.selecionada {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  background: var(--bg-elev-2);
+}
+.cor-opcao.selecionada .cor-nome { color: var(--text-primary); font-weight: 600; }
+.cor-opcao.selecionada::after {
+  content: '✓';
+  margin-left: auto;
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+}
+
+/* O seletor livre também mostra a cor atual como amostra. */
+.cor-custom-linha code {
+  font-family: var(--font-mono);
+  background: var(--bg-elev-2);
+  padding: .2rem .5rem;
+  border-radius: 5px;
+}

@@ -1,0 +1,4 @@
+painel-docker.exe
+*.exe
+*.log
+dist/

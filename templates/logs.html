@@ -1,0 +1,44 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>{{.Nome}}</h1>
+    <p class="page-sub">
+      {{.Imagem}}
+      {{if .Rodando}}<span class="badge badge--green">running</span>
+      {{else}}<span class="badge badge--red">parado</span>{{end}}
+    </p>
+  </div>
+  <a href="/containers" class="btn-secondary btn-sm">Voltar</a>
+</header>
+
+{{if .Erro}}<div class="alert alert-erro">{{.Erro}}</div>{{end}}
+
+<section class="section-card">
+  <div class="toolbar log-toolbar">
+    <input type="search" id="filtro-log" placeholder="Filtrar linhas..." autocomplete="off">
+    <span class="atalho">/</span>
+
+    <select id="tail">
+      <option value="100">últimas 100</option>
+      <option value="200" selected>últimas 200</option>
+      <option value="1000">últimas 1000</option>
+      <option value="all">tudo</option>
+    </select>
+
+    <label class="auto-refresh"><input type="checkbox" id="opt-timestamps"> carimbo de hora</label>
+    <label class="auto-refresh"><input type="checkbox" id="opt-wrap" checked> quebrar linha</label>
+    <label class="auto-refresh"><input type="checkbox" id="opt-scroll" checked> seguir o fim</label>
+
+    <span class="log-estado" id="log-estado">conectando…</span>
+    <button type="button" class="btn-secondary btn-sm" id="btn-limpar">Limpar</button>
+    <button type="button" class="btn-secondary btn-sm" id="btn-baixar">Baixar</button>
+  </div>
+
+  <div class="log-visor wrap" id="visor" aria-live="polite"></div>
+  <p class="muted log-rodape"><span id="log-contagem">0</span> linhas</p>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () { initLogStream({ id: {{.ID}}, nome: {{.Nome}} }); });
+</script>
+{{end}}

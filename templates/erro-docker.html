@@ -1,0 +1,33 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Sem conexão com o Docker</h1>
+    <p class="page-sub">O painel não conseguiu falar com o Docker Engine.</p>
+  </div>
+</header>
+
+<section class="section-card">
+  <div class="alert alert-erro">
+    <strong>Endpoint:</strong> {{.Host}}<br>
+    <strong>Distro WSL configurada:</strong> {{.Distro}}
+  </div>
+
+  <h2>Diagnóstico</h2>
+  <ol class="diagnostico">
+    {{range .Diagnostico}}<li>{{.}}</li>{{end}}
+  </ol>
+
+  <h2>Verificações rápidas</h2>
+  <p>Execute no PowerShell, nesta ordem. A primeira que falhar indica onde está o problema.</p>
+  <pre><code>wsl -l -v
+wsl -d {{.Distro}} -- systemctl status docker --no-pager
+wsl -d {{.Distro}} -- curl -s --unix-socket /var/run/docker.sock http://localhost/_ping
+curl.exe -s http://127.0.0.1:2375/_ping</code></pre>
+
+  <p class="muted">
+    Se o teste pelo socket Unix funciona mas o último falha, o daemon está de pé e o
+    problema é a exposição em TCP — confira o drop-in do systemd em
+    <code>/etc/systemd/system/docker.service.d/override.conf</code>.
+  </p>
+</section>
+{{end}}

@@ -1,0 +1,95 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Configurações</h1>
+    <p class="page-sub">Aparência do painel e dados da conexão com o Docker.</p>
+  </div>
+</header>
+
+<section class="section-card">
+  <h2>Cor de destaque</h2>
+  <p class="muted" style="margin-top:-.5rem">
+    Usada no item de menu ativo, em links e no ícone da marca. Vale para os dois temas.
+  </p>
+
+  <form method="POST" action="/configuracoes/aparencia" id="form-cor">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+
+    <div class="paleta">
+      {{range .Paleta}}
+      <label class="cor-opcao {{if .Selecionada}}selecionada{{end}}">
+        <input type="radio" name="accent" value="{{.Hex}}" {{if .Selecionada}}checked{{end}}>
+        <span class="cor-amostra" style="background: {{.Hex}}"></span>
+        <span class="cor-nome">{{.Nome}}</span>
+      </label>
+      {{end}}
+    </div>
+
+    <div class="cor-custom">
+      <label for="cor-livre">Ou escolha uma cor específica</label>
+      <div class="cor-custom-linha">
+        <input type="color" id="cor-livre" value="{{.Accent}}">
+        <code id="cor-livre-hex">{{.Accent}}</code>
+        <button type="button" class="btn-secondary btn-sm" id="usar-cor-livre">Usar esta cor</button>
+      </div>
+    </div>
+
+    <div class="form-acoes">
+      <button type="submit" class="btn-primary">Salvar</button>
+    </div>
+  </form>
+</section>
+
+<section class="section-card">
+  <h2>Conexão</h2>
+  <dl class="dados">
+    <div><dt>Endpoint do Docker</dt><dd><code>{{.DockerHost}}</code></dd></div>
+    <div><dt>Distro WSL (compose)</dt><dd><code>{{.WSLDistro}}</code></dd></div>
+    <div><dt>Engine</dt><dd>{{if .DockerOK}}{{.EngineVersao}}{{else}}<span class="muted">sem conexão</span>{{end}}</dd></div>
+    <div><dt>Banco local</dt><dd><code>{{.CaminhoDB}}</code></dd></div>
+    <div><dt>Versão do painel</dt><dd>{{.Versao}}</dd></div>
+  </dl>
+  <p class="muted">
+    Endpoint e distro são definidos por flag na inicialização
+    (<code>-docker-host</code>, <code>-wsl-distro</code>).
+  </p>
+</section>
+
+<script>
+  // O seletor nativo de cor alimenta um radio escondido, para o formulário
+  // continuar enviando um único campo `accent`.
+  document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('cor-livre');
+    const hex   = document.getElementById('cor-livre-hex');
+    const usar  = document.getElementById('usar-cor-livre');
+    if (!input) return;
+
+    input.addEventListener('input', () => { hex.textContent = input.value; });
+
+    usar.addEventListener('click', () => {
+      document.querySelectorAll('input[name="accent"]').forEach(r => { r.checked = false; });
+      document.querySelectorAll('.cor-opcao').forEach(l => l.classList.remove('selecionada'));
+
+      let livre = document.getElementById('accent-livre');
+      if (!livre) {
+        livre = document.createElement('input');
+        livre.type = 'radio';
+        livre.name = 'accent';
+        livre.id   = 'accent-livre';
+        livre.hidden = true;
+        document.getElementById('form-cor').appendChild(livre);
+      }
+      livre.value = input.value;
+      livre.checked = true;
+      document.getElementById('form-cor').submit();
+    });
+
+    document.querySelectorAll('.cor-opcao input').forEach(r => {
+      r.addEventListener('change', () => {
+        document.querySelectorAll('.cor-opcao').forEach(l => l.classList.remove('selecionada'));
+        r.closest('.cor-opcao').classList.add('selecionada');
+      });
+    });
+  });
+</script>
+{{end}}

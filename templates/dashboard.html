@@ -1,0 +1,80 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="page-sub">Visão geral do Docker Engine nesta máquina.</p>
+  </div>
+</header>
+
+<div class="stats-grid">
+  <article class="stat-card stat-card--green">
+    <span class="stat-label">Containers rodando</span>
+    <strong class="stat-value">{{.ContainersRodando}}</strong>
+  </article>
+  <article class="stat-card stat-card--red">
+    <span class="stat-label">Containers parados</span>
+    <strong class="stat-value">{{.ContainersParados}}</strong>
+  </article>
+  <article class="stat-card stat-card--blue">
+    <span class="stat-label">Imagens</span>
+    <strong class="stat-value">{{.TotalImagens}}</strong>
+    {{if .EspacoImagens}}<small class="muted">{{.EspacoImagens}} em disco</small>{{end}}
+  </article>
+  <article class="stat-card stat-card--orange">
+    <span class="stat-label">Volumes</span>
+    <strong class="stat-value">{{.TotalVolumes}}</strong>
+  </article>
+</div>
+
+{{if not .DockerOK}}
+<section class="section-card">
+  <div class="alert alert-aviso">
+    <strong>Sem conexão com o Docker Engine.</strong>
+    Os contadores acima ficam zerados até o daemon responder.
+    <a href="/configuracoes">Verificar configuração</a>.
+  </div>
+</section>
+{{end}}
+
+<section class="section-card">
+  <header class="section-header">
+    <h2>Últimas ações</h2>
+    <a href="/acoes" class="btn-secondary btn-sm">Ver histórico completo</a>
+  </header>
+
+  {{if .UltimasAcoes}}
+  <div class="table-wrapper">
+    <table id="tbl-acoes">
+      <thead>
+        <tr>
+          <th>Quando</th>
+          <th>Alvo</th>
+          <th>Ação</th>
+          <th>Resultado</th>
+          <th>Duração</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .UltimasAcoes}}
+        <tr>
+          <td>{{hora .CriadoEm}}</td>
+          <td>{{.AlvoNome}}<small class="muted"> ({{.AlvoTipo}})</small></td>
+          <td>{{.Acao}}</td>
+          <td>
+            {{if eq .Resultado "ok"}}
+              <span class="badge badge--green">ok</span>
+            {{else}}
+              <span class="badge badge--red" title="{{.Erro}}">erro</span>
+            {{end}}
+          </td>
+          <td>{{duracao .DuracaoMS}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <p class="muted">Nenhuma ação registrada ainda. As operações feitas pelo painel aparecem aqui.</p>
+  {{end}}
+</section>
+{{end}}

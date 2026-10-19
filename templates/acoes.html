@@ -1,0 +1,64 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Histórico</h1>
+    <p class="page-sub">Todas as operações executadas pelo painel, com resultado e duração.</p>
+  </div>
+</header>
+
+<section class="section-card">
+  <div class="toolbar">
+    <input type="search" id="busca" placeholder="Filtrar por alvo ou ação..." autocomplete="off">
+    <span class="atalho" title="Atalho de teclado">/</span>
+    <span class="muted" id="contador"></span>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="tbl-acoes">
+      <thead>
+        <tr>
+          <th data-sort="0">Quando <span class="sort-ico">↕</span></th>
+          <th data-sort="1">Tipo <span class="sort-ico">↕</span></th>
+          <th data-sort="2">Alvo <span class="sort-ico">↕</span></th>
+          <th data-sort="3">Ação <span class="sort-ico">↕</span></th>
+          <th data-sort="4">Resultado <span class="sort-ico">↕</span></th>
+          <th>Duração</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Acoes}}
+        <tr>
+          <td>{{hora .CriadoEm}}</td>
+          <td><small class="muted">{{.AlvoTipo}}</small></td>
+          <td><strong>{{.AlvoNome}}</strong></td>
+          <td>{{.Acao}}</td>
+          <td>
+            {{if eq .Resultado "ok"}}
+              <span class="badge badge--green">ok</span>
+            {{else}}
+              <span class="badge badge--red">erro</span>
+            {{end}}
+          </td>
+          <td>{{duracao .DuracaoMS}}</td>
+        </tr>
+        {{if .Erro}}
+        <tr class="linha-erro">
+          <td colspan="6"><small class="muted">{{.Erro}}</small></td>
+        </tr>
+        {{end}}
+        {{else}}
+        <tr><td colspan="6" class="muted">Nenhuma ação registrada ainda.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // app.js vem com defer: inicializar aqui, nao durante o parse.
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableFilter({ tableId: 'tbl-acoes', searchId: 'busca', countId: 'contador' });
+    initTableSort('tbl-acoes');
+  });
+</script>
+{{end}}

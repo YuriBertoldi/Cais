@@ -1,0 +1,125 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Stacks</h1>
+    <p class="page-sub">Arquivos <code>docker-compose.yml</code> registrados, com estado e controles.</p>
+  </div>
+  <button class="btn-primary" data-open-dialog="dlg-stack">Cadastrar stack</button>
+</header>
+
+{{if .Erro}}<div class="alert alert-erro">{{.Erro}}</div>{{end}}
+
+{{if not .DockerOK}}
+<div class="alert alert-erro"><strong>Sem conexão com o Docker Engine.</strong> {{.DockerErro}}</div>
+{{end}}
+
+{{if .Stacks}}
+<div class="stacks-lista">
+  {{range .Stacks}}
+  <section class="section-card stack-card">
+    <header class="stack-topo">
+      <div class="stack-id">
+        <h2>
+          {{.Nome}}
+          {{if .Ausente}}<span class="badge badge--orange">arquivo ausente</span>
+          {{else if .Ativa}}<span class="badge badge--green">{{.Rodando}} de {{.Total}} no ar</span>
+          {{else}}<span class="badge badge--gray">parada</span>{{end}}
+        </h2>
+        <code class="caminho">{{.CaminhoYML}}</code>
+      </div>
+
+      <div class="stack-acoes">
+        {{if not .Ausente}}
+          <form method="POST" action="/stacks/{{.ID}}/up">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <button type="submit" class="btn-secondary btn-sm" title="docker compose up -d">Subir</button>
+          </form>
+          <form method="POST" action="/stacks/{{.ID}}/restart">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <button type="submit" class="btn-secondary btn-sm">Reiniciar</button>
+          </form>
+          <form method="POST" action="/stacks/{{.ID}}/down"
+                onsubmit="return confirm('Derrubar a stack {{.Nome}}? Os containers serão removidos. Volumes nomeados são preservados.');">
+            <input type="hidden" name="csrf" value="{{$.CSRF}}">
+            <button type="submit" class="btn-secondary btn-sm">Derrubar</button>
+          </form>
+        {{end}}
+        <form method="POST" action="/stacks/{{.ID}}/delete"
+              onsubmit="return confirm('Remover o cadastro de {{.Nome}}? Os containers e o arquivo não são alterados.');">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}">
+          <button type="submit" class="btn-icon btn-icon--perigo" title="Remover cadastro" aria-label="Remover cadastro">
+            <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#trash"/></svg>
+          </button>
+        </form>
+      </div>
+    </header>
+
+    {{if .Ausente}}
+      <p class="muted">O arquivo não existe mais neste caminho. Mova-o de volta ou remova o cadastro.</p>
+    {{else if .Erro}}
+      <div class="alert alert-aviso">{{.Erro}}</div>
+    {{else if .Servicos}}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Serviço</th><th>Container</th><th>Imagem</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            {{range .Servicos}}
+            <tr>
+              <td><strong>{{.Service}}</strong></td>
+              <td><small>{{.Name}}</small></td>
+              <td><small>{{.Image}}</small></td>
+              <td>
+                {{if .Rodando}}<span class="badge badge--green">{{.State}}</span>
+                {{else}}<span class="badge badge--red">{{.State}}</span>{{end}}
+                {{if .Health}}<small class="muted"> {{.Health}}</small>{{end}}
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <p class="muted">Nenhum container criado ainda. Use <strong>Subir</strong> para iniciar a stack.</p>
+    {{end}}
+  </section>
+  {{end}}
+</div>
+{{else}}
+<section class="section-card">
+  <p class="muted">
+    Nenhuma stack cadastrada. Aponte para um <code>docker-compose.yml</code> do seu
+    repositório e controle o ciclo de vida dele por aqui, sem linha de comando.
+  </p>
+  <button class="btn-primary" data-open-dialog="dlg-stack">Cadastrar a primeira</button>
+</section>
+{{end}}
+
+<dialog id="dlg-stack">
+  <form method="POST" action="/stacks">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <h3>Cadastrar stack</h3>
+
+    <label for="caminho_yml">Caminho do docker-compose.yml</label>
+    <input type="text" id="caminho_yml" name="caminho_yml" required
+           placeholder="C:\Sistemas\git\meu-projeto\docker-compose.yml">
+
+    <label for="nome">Nome <small class="muted">(opcional — usa o nome da pasta)</small></label>
+    <input type="text" id="nome" name="nome" placeholder="meu-projeto">
+
+    <label for="project_name">Nome do projeto Compose <small class="muted">(opcional)</small></label>
+    <input type="text" id="project_name" name="project_name" placeholder="deixe vazio para o padrão">
+
+    <p class="muted">
+      O arquivo é validado no cadastro: se o Compose não conseguir lê-lo, o
+      cadastro é recusado na hora em vez de falhar depois, ao subir.
+    </p>
+
+    <div class="dialog-acoes">
+      <button type="button" class="btn-secondary" data-close-dialog>Cancelar</button>
+      <button type="submit" class="btn-primary">Cadastrar</button>
+    </div>
+  </form>
+</dialog>
+{{end}}

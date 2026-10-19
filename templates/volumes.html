@@ -1,0 +1,95 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Volumes</h1>
+    <p class="page-sub">{{len .Volumes}} volumes conhecidos pelo daemon.</p>
+  </div>
+  <button class="btn-primary" data-open-dialog="dlg-volume">Criar volume</button>
+</header>
+
+<dialog id="dlg-volume">
+  <form method="POST" action="/volumes/criar">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <h3>Criar volume</h3>
+
+    <label for="vol-nome">Nome</label>
+    <input type="text" id="vol-nome" name="nome" required placeholder="meus-dados" autocomplete="off">
+    <small class="muted">
+      Volume nomeado fica no disco gerenciado pelo Docker e sobrevive a
+      <code>compose down</code> e à remoção do container.
+    </small>
+
+    <div class="dialog-acoes">
+      <button type="button" class="btn-secondary" data-close-dialog>Cancelar</button>
+      <button type="submit" class="btn-primary">Criar</button>
+    </div>
+  </form>
+</dialog>
+
+{{if .Erro}}<div class="alert alert-erro">{{.Erro}}</div>{{end}}
+{{if not .DockerOK}}
+<div class="alert alert-erro"><strong>Sem conexão com o Docker Engine.</strong> {{.DockerErro}}</div>
+{{else}}
+
+<section class="section-card">
+  <div class="toolbar">
+    <input type="search" id="busca" placeholder="Filtrar por nome..." autocomplete="off">
+    <span class="atalho" title="Atalho de teclado">/</span>
+    <span class="muted" id="contador"></span>
+  </div>
+
+  <div class="alert alert-aviso">
+    Remover um volume <strong>apaga os dados dentro dele</strong>, e não há como desfazer.
+    Volumes em uso por algum container são recusados pelo daemon.
+  </div>
+
+  <div class="table-wrapper">
+    <table id="tbl-volumes">
+      <thead>
+        <tr>
+          <th data-sort="0">Nome <span class="sort-ico">↕</span></th>
+          <th data-sort="1">Driver <span class="sort-ico">↕</span></th>
+          <th>Ponto de montagem</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Volumes}}
+        <tr>
+          <td>
+            <strong>{{.Name}}</strong>
+            <button type="button" class="copiar-id" data-copiar="{{.Name}}" title="Copiar nome" aria-label="Copiar nome">
+              <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#copiar"/></svg>
+            </button>
+          </td>
+          <td><small>{{.Driver}}</small></td>
+          <td><small class="muted">{{.Mountpoint}}</small></td>
+          <td>
+            <div class="acoes acoes--1">
+              <form method="POST" action="/volumes/{{.Name}}/remove"
+                    onsubmit="return confirm('Remover o volume {{.Name}}?\n\nTodos os dados dentro dele serão apagados. Esta ação não pode ser desfeita.');">
+                <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                <button type="submit" class="btn-icon btn-icon--perigo" title="Remover" aria-label="Remover">
+                  <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#trash"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4" class="muted">Nenhum volume.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // app.js vem com defer: inicializar aqui, nao durante o parse.
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableFilter({ tableId: 'tbl-volumes', searchId: 'busca', countId: 'contador' });
+    initTableSort('tbl-volumes');
+  });
+</script>
+{{end}}
+{{end}}

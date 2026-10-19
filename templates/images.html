@@ -1,0 +1,125 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Imagens</h1>
+    <p class="page-sub">{{len .Imagens}} imagens locais ocupando {{bytes .TotalBytes}}.</p>
+  </div>
+  <button class="btn-primary" data-open-dialog="dlg-pull">Baixar imagem</button>
+</header>
+
+<dialog id="dlg-pull">
+  <!-- O Pico trata <dialog> como contêiner de tela cheia e centraliza o
+       primeiro filho. Sem esta caixa, cada elemento vira um item de flex
+       e o conteúdo sai todo numa linha só. -->
+  <div class="dialog-box">
+    <h3>Baixar imagem</h3>
+
+    <label for="ref">Imagem</label>
+    <input type="text" id="ref" placeholder="nginx:alpine" autocomplete="off">
+    <small class="muted">
+      Sem tag, usa <code>latest</code>. Registro privado também vale:
+      <code>meuregistro.com/app:1.2</code>.
+    </small>
+
+    <div class="sugestoes">
+      <span class="muted">Comuns:</span>
+      <button type="button" class="chip" data-sugestao="nginx:alpine">nginx</button>
+      <button type="button" class="chip" data-sugestao="postgres:16-alpine">postgres</button>
+      <button type="button" class="chip" data-sugestao="redis:7-alpine">redis</button>
+      <button type="button" class="chip" data-sugestao="node:22-alpine">node</button>
+      <button type="button" class="chip" data-sugestao="alpine:latest">alpine</button>
+    </div>
+
+    <p class="muted dica-hub">
+      Não sabe o nome exato?
+      <a href="https://hub.docker.com/search?q=" target="_blank" rel="noopener noreferrer" id="link-hub">
+        Procurar no Docker Hub
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#externo"/></svg>
+      </a>
+    </p>
+
+    <div class="pull-progresso" id="pull-progresso" hidden>
+      <div class="pull-barra"><div class="pull-barra-fill" id="pull-fill"></div></div>
+      <pre class="pull-log" id="pull-log"></pre>
+    </div>
+
+    <div class="dialog-acoes">
+      <button type="button" class="btn-secondary" data-close-dialog id="pull-fechar">Cancelar</button>
+      <button type="button" class="btn-primary" id="pull-iniciar">Baixar</button>
+    </div>
+  </div>
+</dialog>
+
+{{if .Erro}}<div class="alert alert-erro">{{.Erro}}</div>{{end}}
+{{if not .DockerOK}}
+<div class="alert alert-erro"><strong>Sem conexão com o Docker Engine.</strong> {{.DockerErro}}</div>
+{{else}}
+
+<section class="section-card">
+  <div class="toolbar">
+    <input type="search" id="busca" placeholder="Filtrar por repositório ou tag..." autocomplete="off">
+    <span class="atalho" title="Atalho de teclado">/</span>
+    <span class="muted" id="contador"></span>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="tbl-images">
+      <thead>
+        <tr>
+          <th data-sort="0">Repositório:tag <span class="sort-ico">↕</span></th>
+          <th data-sort="1">ID <span class="sort-ico">↕</span></th>
+          <th data-sort="2">Tamanho <span class="sort-ico">↕</span></th>
+          <th data-sort="3">Em uso <span class="sort-ico">↕</span></th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Imagens}}
+        <tr>
+          <td>
+            <strong>{{.Tag}}</strong>
+            <button type="button" class="copiar-id" data-copiar="{{.Tag}}" title="Copiar" aria-label="Copiar">
+              <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#copiar"/></svg>
+            </button>
+          </td>
+          <td><small class="muted">{{idcurto .ID}}</small></td>
+          <td>{{bytes .Size}}</td>
+          <td>
+            {{if gt .Containers 0}}<span class="badge badge--green">{{.Containers}}</span>
+            {{else}}<span class="badge badge--gray">não usada</span>{{end}}
+          </td>
+          <td>
+            <div class="acoes acoes--2">
+              <a href="/containers/novo?imagem={{.Tag}}" class="btn-icon"
+                 title="Criar container com esta imagem" aria-label="Criar container">
+                <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#mais"/></svg>
+              </a>
+              <form method="POST" action="/images/{{.ID}}/remove"
+                    onsubmit="return confirm('Remover a imagem {{.Tag}}? Esta ação não pode ser desfeita.');">
+                <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                <input type="hidden" name="nome" value="{{.Tag}}">
+                <button type="submit" class="btn-icon btn-icon--perigo" title="Remover" aria-label="Remover">
+                  <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#trash"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="5" class="muted">Nenhuma imagem local.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // app.js vem com defer: inicializar aqui, nao durante o parse.
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableFilter({ tableId: 'tbl-images', searchId: 'busca', countId: 'contador' });
+    initTableSort('tbl-images');
+    initPullImagem();
+  });
+</script>
+{{end}}
+{{end}}

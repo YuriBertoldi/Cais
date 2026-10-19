@@ -1,0 +1,135 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b12">
+  <title>{{.Title}} — Cais</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Aplicado antes da primeira pintura: sem isto a tela pisca no tema
+    // errado e a barra lateral "pula" de largura ao carregar.
+    (function() {
+      var d = document.documentElement;
+      d.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+      if (localStorage.getItem('sidebar') === 'retraida') d.classList.add('sidebar-retraida');
+    })();
+  </script>
+  <!-- Tudo vendorizado: o .exe precisa funcionar sem rede. -->
+  <link rel="stylesheet" href="/static/vendor/pico.classless.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+
+  <style>
+    /* Cor escolhida em /configuracoes. Os três valores são gerados no Go e
+       validados como #RRGGBB — nada aqui vem cru do formulário.
+
+       Este bloco precisa vir DEPOIS do app.css. O app.css também define
+       --color-accent em :root, com a mesma especificidade, então quem vier
+       por último vence. Com o <style> antes do <link>, a cor escolhida era
+       silenciosamente sobrescrita pelo padrão. */
+    :root, [data-theme="light"] {
+      --color-accent:   {{.Accent}};
+      --color-accent-2: {{.AccentEscuro}};
+      --accent-texto:   {{.AccentTexto}};
+    }
+  </style>
+  <meta name="csrf-token" content="{{.CSRF}}">
+
+  <!-- defer: executa depois do documento parseado e ANTES do DOMContentLoaded.
+       Precisa estar aqui, e não no fim do <body>: scripts inline das páginas
+       rodam durante o parse, então um app.js no fim do body só seria avaliado
+       depois deles — e toda chamada a initTableFilter, initLogStream e afins
+       estourava "is not defined". As páginas chamam suas inicializações dentro
+       de DOMContentLoaded, que dispara depois deste arquivo. -->
+  <script src="/static/app.js" defer></script>
+</head>
+<body class="has-sidebar">
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <a href="/" class="brand-link" title="Cais">
+        <span class="brand-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons.svg#logo"/></svg>
+        </span>
+        <div class="brand-text">
+          <strong>Cais</strong>
+          <small>Gestão de Containers</small>
+        </div>
+      </a>
+      <button class="colapsar" id="colapsar" title="Recolher menu" aria-label="Recolher menu">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#colapsar"/></svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Menu</p>
+      <a href="/" class="nav-item {{if eq .Active "dashboard"}}active{{end}}" data-dica="Dashboard">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#dashboard"/></svg>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a href="/containers" class="nav-item {{if eq .Active "containers"}}active{{end}}" data-dica="Containers">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#container"/></svg>
+        <span class="nav-text">Containers</span>
+      </a>
+      <a href="/stacks" class="nav-item {{if eq .Active "stacks"}}active{{end}}" data-dica="Stacks">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#stack"/></svg>
+        <span class="nav-text">Stacks</span>
+      </a>
+
+      <p class="nav-section-label">Recursos</p>
+      <a href="/images" class="nav-item {{if eq .Active "images"}}active{{end}}" data-dica="Imagens">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#image"/></svg>
+        <span class="nav-text">Imagens</span>
+      </a>
+      <a href="/volumes" class="nav-item {{if eq .Active "volumes"}}active{{end}}" data-dica="Volumes">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#volume"/></svg>
+        <span class="nav-text">Volumes</span>
+      </a>
+
+      <p class="nav-section-label">Configuração</p>
+      <a href="/acoes" class="nav-item {{if eq .Active "acoes"}}active{{end}}" data-dica="Histórico">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#historico"/></svg>
+        <span class="nav-text">Histórico</span>
+      </a>
+      <a href="/configuracoes" class="nav-item {{if eq .Active "configuracoes"}}active{{end}}" data-dica="Configurações">
+        <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#config"/></svg>
+        <span class="nav-text">Configurações</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-btns">
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Alternar tema" aria-label="Alternar tema">
+          <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#moon" id="theme-ico"/></svg>
+        </button>
+      </div>
+      <div class="daemon-chip {{if .DockerOK}}daemon-ok{{else}}daemon-off{{end}}"
+           title="{{if .DockerOK}}Conectado ao Docker Engine{{else}}{{.DockerErro}}{{end}}">
+        <span class="daemon-dot"></span>
+        <div class="daemon-meta">
+          <span class="daemon-estado">{{if .DockerOK}}Conectado{{else}}Sem conexão{{end}}</span>
+          <span class="daemon-versao">{{if .DockerOK}}Engine {{.EngineVersao}}{{else}}Docker indisponível{{end}}</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <main class="app-main">
+    <div class="app-container">
+      {{if not .Flash.Vazia}}
+      <div class="alert alert-{{.Flash.Tipo}}">{{.Flash.Msg}}</div>
+      {{end}}
+      {{template "content" .}}
+    </div>
+  </main>
+
+</body>
+</html>
+{{end}}

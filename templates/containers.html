@@ -1,0 +1,156 @@
+{{define "content"}}
+<header class="page-header">
+  <div>
+    <h1>Containers</h1>
+    <p class="page-sub">Todos os containers conhecidos pelo daemon, em execução ou não.</p>
+  </div>
+  <a href="/containers/novo" class="btn-primary">Novo container</a>
+</header>
+
+{{if .Erro}}
+<div class="alert alert-erro">Falha ao listar containers: {{.Erro}}</div>
+{{end}}
+
+{{if not .DockerOK}}
+<section class="section-card">
+  <div class="alert alert-erro">
+    <strong>Sem conexão com o Docker Engine.</strong> {{.DockerErro}}
+  </div>
+  <p class="muted">
+    Confira se a distro WSL está de pé e se o daemon expõe a porta:
+    <code>wsl -d Ubuntu-24.04 -- systemctl is-active docker</code>
+  </p>
+</section>
+{{else}}
+
+<section class="section-card">
+  <div class="toolbar">
+    <input type="search" id="busca" placeholder="Filtrar por nome, imagem, stack..." autocomplete="off">
+    <span class="atalho" title="Atalho de teclado">/</span>
+
+    <div class="chips">
+      <button type="button" class="chip ativo" data-estado="todos">Todos</button>
+      <button type="button" class="chip" data-estado="running">Rodando</button>
+      <button type="button" class="chip" data-estado="parado">Parados</button>
+    </div>
+
+    <label class="auto-refresh" title="Recarrega a lista a cada 5 segundos">
+      <input type="checkbox" id="auto-refresh"> atualizar sozinho
+    </label>
+
+    <span class="muted" id="contador"></span>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="tbl-containers">
+      <thead>
+        <tr>
+          <th data-sort="0">Nome <span class="sort-ico">↕</span></th>
+          <th data-sort="1">Imagem <span class="sort-ico">↕</span></th>
+          <th data-sort="2">Stack <span class="sort-ico">↕</span></th>
+          <th data-sort="3">Estado <span class="sort-ico">↕</span></th>
+          <th>Portas</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Containers}}
+        <tr data-estado="{{.State}}">
+          <td>
+            <strong>{{.Nome}}</strong>
+            <button type="button" class="copiar-id" data-copiar="{{.Nome}}"
+                    title="Copiar nome" aria-label="Copiar nome">
+              <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#copiar"/></svg>
+            </button>
+            <br>
+            <small class="muted">{{.IDCurto}}</small>
+          </td>
+          <td><small>{{.Image}}</small></td>
+          <td>
+            {{if .Projeto}}<small>{{.Projeto}}<br><span class="muted">{{.Servico}}</span></small>
+            {{else}}<span class="muted">—</span>{{end}}
+          </td>
+          <td>
+            {{if .Rodando}}
+              <span class="badge badge--green">{{.State}}</span>
+            {{else if eq .State "paused"}}
+              <span class="badge badge--orange">{{.State}}</span>
+            {{else}}
+              <span class="badge badge--red">{{.State}}</span>
+            {{end}}
+            <br><small class="muted">{{.Status}}</small>
+          </td>
+          <td class="col-portas">
+            {{range .LinksPublicados}}
+              {{if .Web}}
+                <a class="porta" href="{{.URL}}" target="_blank" rel="noopener noreferrer"
+                   title="Abrir {{.URL}}">{{.Rotulo}}<svg class="ico" aria-hidden="true"><use href="/static/icons.svg#externo"/></svg></a>
+              {{else}}
+                <span class="porta">{{.Rotulo}}</span>
+              {{end}}
+            {{else}}<span class="muted">—</span>{{end}}
+          </td>
+          <td>
+            <div class="acoes acoes--4">
+              <a href="/containers/{{.ID}}/logs" class="btn-icon" title="Ver logs" aria-label="Ver logs">
+                <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#logs"/></svg>
+              </a>
+              {{if .Rodando}}
+                <form method="POST" action="/containers/{{.ID}}/stop">
+                  <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                  <button type="submit" class="btn-icon" title="Parar" aria-label="Parar">
+                    <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#stop"/></svg>
+                  </button>
+                </form>
+                <form method="POST" action="/containers/{{.ID}}/restart">
+                  <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                  <button type="submit" class="btn-icon" title="Reiniciar" aria-label="Reiniciar">
+                    <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#restart"/></svg>
+                  </button>
+                </form>
+              {{else}}
+                <form method="POST" action="/containers/{{.ID}}/start">
+                  <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                  <button type="submit" class="btn-icon" title="Iniciar" aria-label="Iniciar">
+                    <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#play"/></svg>
+                  </button>
+                </form>
+                <span class="btn-icon-vazio" aria-hidden="true"></span>
+              {{end}}
+              <form method="POST" action="/containers/{{.ID}}/remove"
+                    onsubmit="return confirm('Remover o container {{.Nome}}? Esta ação não pode ser desfeita.');">
+                <input type="hidden" name="csrf" value="{{$.CSRF}}">
+                <button type="submit" class="btn-icon btn-icon--perigo" title="Remover" aria-label="Remover">
+                  <svg class="ico" aria-hidden="true"><use href="/static/icons.svg#trash"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="6" class="muted">Nenhum container encontrado.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="legenda">
+    <span><svg class="ico" aria-hidden="true"><use href="/static/icons.svg#play"/></svg> iniciar</span>
+    <span><svg class="ico" aria-hidden="true"><use href="/static/icons.svg#stop"/></svg> parar</span>
+    <span><svg class="ico" aria-hidden="true"><use href="/static/icons.svg#restart"/></svg> reiniciar</span>
+    <span><svg class="ico" aria-hidden="true"><use href="/static/icons.svg#trash"/></svg> remover</span>
+  </p>
+</section>
+
+<script>
+  // DOMContentLoaded porque o app.js é carregado com defer: ele é avaliado
+  // depois deste script inline, mas antes deste evento.
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableFilter({ tableId: 'tbl-containers', searchId: 'busca', countId: 'contador' });
+    initTableSort('tbl-containers');
+    initChipsEstado({ tableId: 'tbl-containers' });
+    initAutoRefresh(5);
+  });
+</script>
+{{end}}
+{{end}}
