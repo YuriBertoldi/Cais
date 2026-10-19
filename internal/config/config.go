@@ -37,7 +37,7 @@ func Load() Config {
 	flag.BoolVar(&c.Dev, "dev", false, "le templates/estaticos do disco e reparseia a cada request")
 	flag.IntVar(&c.Porta, "porta", PortaPadrao, "porta de escuta (0 = qualquer porta livre)")
 	navegador := flag.Bool("no-browser", false, "nao abrir o navegador no startup")
-	flag.StringVar(&c.DockerHost, "docker-host", "tcp://127.0.0.1:2375", "endpoint da Engine API do Docker")
+	flag.StringVar(&c.DockerHost, "docker-host", "tcp://127.0.0.1:2375", "endpoint da Engine API: tcp://host:porta ou wsl://distro (dial-stdio, sem porta TCP)")
 	flag.StringVar(&c.WSLDistro, "wsl-distro", "Ubuntu-24.04", "distro WSL usada para executar o docker compose")
 	flag.StringVar(&c.CaminhoDB, "db", "", "caminho do SQLite (padrao: %LOCALAPPDATA%\\Cais\\painel.db)")
 	flag.Parse()

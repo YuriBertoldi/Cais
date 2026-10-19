@@ -45,7 +45,7 @@ func (r *Runner) montar(ctx context.Context, caminhoYML, projectName string, arg
 	yml := ToWSLPath(caminhoYML)
 	dir := ToWSLPath(filepath.Dir(caminhoYML))
 
-	base := []string{"-d", r.Distro, "--", "docker", "compose", "-f", yml, "--project-directory", dir}
+	base := []string{"-d", r.Distro, "--exec", "docker", "compose", "-f", yml, "--project-directory", dir}
 	if projectName != "" {
 		base = append(base, "-p", projectName)
 	}

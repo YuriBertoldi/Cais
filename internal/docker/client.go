@@ -64,15 +64,19 @@ func New(o Options) (*Client, error) {
 	if host == "" {
 		host = "tcp://127.0.0.1:2375"
 	}
-	if !strings.HasPrefix(host, "tcp://") {
-		return nil, fmt.Errorf("host %q nao suportado: use tcp://host:porta", host)
+	var d Dialer
+	switch {
+	case strings.HasPrefix(host, "tcp://"):
+		d = &tcpDialer{addr: strings.TrimPrefix(host, "tcp://")}
+	case strings.HasPrefix(host, "wsl://"):
+		d = &wslDialer{distro: strings.TrimPrefix(host, "wsl://")}
+	default:
+		return nil, fmt.Errorf("host %q nao suportado: use tcp://host:porta ou wsl://distro", host)
 	}
-	addr := strings.TrimPrefix(host, "tcp://")
 
 	if o.Timeout <= 0 {
 		o.Timeout = 30 * time.Second
 	}
-	d := &tcpDialer{addr: addr}
 
 	return &Client{
 		dialer: d,

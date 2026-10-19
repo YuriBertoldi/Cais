@@ -17,6 +17,7 @@ func TestToWSLPath(t *testing.T) {
 	}{
 		{"unidade maiuscula com barra invertida", `C:\Sistemas\git\projeto`, "/mnt/c/Sistemas/git/projeto"},
 		{"unidade minuscula com barra normal", "c:/Sistemas/git", "/mnt/c/Sistemas/git"},
+		{"unidade minuscula ate o arquivo", "d:/dados/x.yml", "/mnt/d/dados/x.yml"},
 		{"outra unidade ate o arquivo", `D:\x\y\docker-compose.yml`, "/mnt/d/x/y/docker-compose.yml"},
 		{"raiz da unidade", `C:\`, "/mnt/c/"},
 		{"espacos em volta sao descartados", "  C:\\a\\b  ", "/mnt/c/a/b"},

@@ -28,33 +28,61 @@ func clienteFake(t *testing.T, h http.HandlerFunc) *Client {
 	return c
 }
 
-func TestNewHostPadrao(t *testing.T) {
-	c, err := New(Options{})
-	if err != nil {
-		t.Fatalf("New com host vazio: %v", err)
+func TestNewEscolheTransportePeloPrefixo(t *testing.T) {
+	casos := []struct {
+		host      string
+		descricao string
+		erro      bool
+	}{
+		{"", "tcp://127.0.0.1:2375", false},
+		{"tcp://10.0.0.5:2376", "tcp://10.0.0.5:2376", false},
+		{"wsl://Ubuntu-24.04", "wsl://Ubuntu-24.04", false},
+		{"wsl://", "wsl://(distro padrao)", false},
+		{"unix:///var/run/docker.sock", "", true},
+		{"http://127.0.0.1:2375", "", true},
 	}
-	if got := c.Descricao(); got != "tcp://127.0.0.1:2375" {
-		t.Errorf("Descricao() = %q; esperado tcp://127.0.0.1:2375", got)
-	}
-	if c.http.Timeout != 30*time.Second {
-		t.Errorf("Timeout = %v; esperado 30s", c.http.Timeout)
+	for _, c := range casos {
+		cli, err := New(Options{Host: c.host})
+		if c.erro {
+			if err == nil {
+				t.Errorf("host %q: esperava erro", c.host)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("host %q: erro inesperado: %v", c.host, err)
+			continue
+		}
+		if got := cli.Descricao(); got != c.descricao {
+			t.Errorf("host %q: descricao = %q, esperava %q", c.host, got, c.descricao)
+		}
 	}
 }
 
-// TestNewHostNaoSuportado garante que a unica forma de transporte aceita hoje
-// e TCP: aceitar silenciosamente um unix:// daria um cliente que nunca conecta.
+// TestNewHostNaoSuportado completa a tabela acima com as formas que um usuario
+// vindo de outra ferramenta tentaria: o npipe do Docker Desktop e o host cru,
+// sem esquema. Aceitar qualquer uma delas daria um cliente que nunca conecta.
 func TestNewHostNaoSuportado(t *testing.T) {
 	casos := []string{
-		"unix:///var/run/docker.sock",
 		"npipe:////./pipe/docker_engine",
 		"127.0.0.1:2375",
-		"http://127.0.0.1:2375",
+		"ssh://usuario@maquina",
 	}
 
 	for _, host := range casos {
 		if _, err := New(Options{Host: host}); err == nil {
 			t.Errorf("New(%q) nao devolveu erro", host)
 		}
+	}
+}
+
+func TestNewTimeoutPadrao(t *testing.T) {
+	c, err := New(Options{})
+	if err != nil {
+		t.Fatalf("New com host vazio: %v", err)
+	}
+	if c.http.Timeout != 30*time.Second {
+		t.Errorf("Timeout = %v; esperado 30s", c.http.Timeout)
 	}
 }
 

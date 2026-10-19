@@ -37,7 +37,7 @@ func TestMontarArgumentos(t *testing.T) {
 	cmd := r.montar(context.Background(), `C:\Sistemas\app\docker-compose.yml`, "", "up", "-d")
 
 	esperado := []string{
-		"wsl.exe", "-d", "Ubuntu-24.04", "--",
+		"wsl.exe", "-d", "Ubuntu-24.04", "--exec",
 		"docker", "compose",
 		"-f", "/mnt/c/Sistemas/app/docker-compose.yml",
 		"--project-directory", "/mnt/c/Sistemas/app",
@@ -56,7 +56,7 @@ func TestMontarComProjectName(t *testing.T) {
 	cmd := r.montar(context.Background(), `D:\app\compose.yml`, "meuprojeto", "ps")
 
 	esperado := []string{
-		"wsl.exe", "-d", "Debian", "--",
+		"wsl.exe", "-d", "Debian", "--exec",
 		"docker", "compose",
 		"-f", "/mnt/d/app/compose.yml",
 		"--project-directory", "/mnt/d/app",
@@ -71,6 +71,29 @@ func TestMontarSemProjectNameNaoEnviaFlagP(t *testing.T) {
 	for _, a := range cmd.Args {
 		if a == "-p" {
 			t.Fatalf("flag -p nao deveria aparecer sem project name: %v", cmd.Args)
+		}
+	}
+}
+
+// Sem --exec o wsl.exe passa a linha de comando por um shell da distro, que
+// expande $VAR e $(...) nos argumentos (caminho do yml, nome do projeto).
+func TestMontarUsaExecSemShell(t *testing.T) {
+	r := New("Ubuntu")
+	cmd := r.montar(context.Background(), `C:\pasta\a$(echo x)\docker-compose.yml`, "proj$USER", "up")
+
+	args := cmd.Args[1:]
+	esperado := []string{
+		"-d", "Ubuntu", "--exec", "docker", "compose",
+		"-f", "/mnt/c/pasta/a$(echo x)/docker-compose.yml",
+		"--project-directory", "/mnt/c/pasta/a$(echo x)",
+		"-p", "proj$USER", "up",
+	}
+	if len(args) != len(esperado) {
+		t.Fatalf("args = %q, esperava %q", args, esperado)
+	}
+	for i := range esperado {
+		if args[i] != esperado[i] {
+			t.Errorf("args[%d] = %q, esperava %q", i, args[i], esperado[i])
 		}
 	}
 }
