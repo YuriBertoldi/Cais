@@ -1,86 +1,85 @@
 # Cais
 
-Interface web local para gerenciar containers Docker, entregue como **um único
-executável**. Sem instalação, sem dependência de runtime, sem conta.
+Um painel web para gerenciar containers Docker. É um `.exe` de 13 MB — baixa,
+dá duplo clique, abre no navegador. Não tem instalador, não pede login, não
+precisa de runtime nenhum.
 
-Nasceu de uma necessidade concreta: o Docker Desktop exige assinatura paga em
-empresas acima de certo porte, mas o **Docker Engine é Apache 2.0 e gratuito**.
-Quem migra para o Engine puro perde a interface gráfica e volta para a linha de
-comando. Este projeto repõe essa interface.
+![Containers](docs/img/containers.jpg)
 
-> **Não é afiliado à Docker, Inc.** É um cliente independente da Engine API.
-> Veja [NOTICE.md](NOTICE.md).
+## Por que isso existe
 
-## Características
+O Docker Desktop passou a exigir assinatura paga em empresas acima de 250
+funcionários ou US$ 10 milhões de faturamento. A saída óbvia é usar o Docker
+Engine direto, que é Apache 2.0 e continua de graça.
 
-- **Um arquivo.** Templates, CSS, JavaScript e ícones embutidos via `go:embed`.
-  Copiar o `.exe` é a instalação inteira — 13 MB, sem instalador.
-- **Uma dependência direta.** `modernc.org/sqlite` (Go puro, sem cgo). O SDK
-  oficial do Docker foi descartado de propósito: traria cerca de 60 módulos
-  transitivos e 20–25 MB ao binário para usar aproximadamente 15 endpoints.
-- **Funciona offline.** Nenhum recurso vem de CDN.
-- **Sem login.** A proteção é de rede, não de credencial — ver *Segurança*.
+Só que aí você perde a interface e volta para a linha de comando. Para quem usa
+Docker o dia inteiro isso é um baque — principalmente para quem não é de
+infraestrutura e só quer ver se o container subiu.
 
-## O que dá para fazer
+O Cais tapa esse buraco. Não tenta ser o Docker Desktop: não gerencia Kubernetes,
+não tem marketplace de extensão, não sincroniza nada com nuvem. Faz o que você
+realmente abria o Desktop para fazer.
 
-| Tela | Recursos |
-|---|---|
-| **Dashboard** | Contadores de containers, imagens e volumes; espaço em disco; últimas ações |
-| **Containers** | Listar com estado, stack de origem e portas; iniciar, parar, reiniciar, remover; **criar** (imagem, nome, portas, variáveis, volumes, política de reinício, comando); porta publicada vira link clicável |
-| **Logs** | Stream ao vivo, filtro de linhas, `tail` ajustável, carimbo de hora, quebra de linha, seguir o fim, limpar e baixar |
-| **Stacks** | Registrar um `docker-compose.yml` com validação; subir, reiniciar e derrubar; estado por serviço |
-| **Imagens** | Listar com tamanho e uso; **baixar com progresso**; remover; atalho para criar container |
-| **Volumes** | Listar; **criar**; remover |
-| **Histórico** | Toda operação do painel, com resultado, duração e erro |
-| **Configurações** | Cor de destaque (paleta ou cor livre) e dados da conexão |
+> Não tem ligação nenhuma com a Docker, Inc. É só um cliente da Engine API.
+> Detalhes em [NOTICE.md](NOTICE.md).
 
-Em todas as tabelas: busca, ordenação por coluna e copiar para a área de
-transferência. Tema claro/escuro, menu retrátil e atalhos de teclado.
+## O que ele faz
 
-## Estado atual
+**Containers** — lista com estado, portas e stack de origem. Inicia, para,
+reinicia e remove. Cria container novo por formulário: imagem, nome, portas,
+variáveis de ambiente, volumes, política de reinício e comando. Porta publicada
+vira link clicável, então `8080` abre o serviço direto.
 
-| Fase | Entrega | Estado |
-|---|---|---|
-| 1 | Servidor local, SQLite, templates, design system | ✅ |
-| 2 | Cliente da Engine API, listagem de containers | ✅ |
-| 3 | Ciclo de vida (iniciar/parar/reiniciar/remover) e histórico | ✅ |
-| 4 | Estatísticas ao vivo (CPU e memória) via SSE | pendente |
-| 5 | Logs ao vivo | ✅ |
-| 6 | Terminal interativo (`exec`) | pendente |
-| 7 | Imagens e volumes | ✅ |
-| 8 | Stacks Compose (subir, derrubar, reiniciar) | ✅ |
-| 9 | Acabamento e distribuição | parcial |
-| — | Criar volume, baixar imagem, criar container | ✅ |
+**Logs ao vivo** — o recurso que mais economiza terminal no dia a dia. Filtro de
+linha, escolha de quantas linhas carregar, carimbo de hora, seguir o fim e botão
+para baixar tudo.
 
-**Pendentes:** estatísticas ao vivo (CPU e memória por container) e terminal
-interativo. São os dois itens que faltam para o escopo original fechar.
+![Logs](docs/img/logs.jpg)
 
-Enquanto o terminal não existe, para entrar num container ainda é linha de
-comando:
+**Stacks do Compose** — você aponta para um `docker-compose.yml` e controla
+subir, reiniciar e derrubar pela tela. O arquivo é validado no cadastro, então
+compose quebrado é recusado na hora em vez de falhar depois.
+
+**Imagens e volumes** — baixar imagem com barra de progresso, remover, criar
+volume. Tudo o que normalmente exigiria decorar flag de CLI.
+
+**Histórico** — toda operação feita pelo painel fica registrada com resultado,
+duração e erro. Já me salvou: containers sumiram, olhei o histórico e estava lá
+quem rodou o `down` e quando.
+
+![Dashboard](docs/img/dashboard.jpg)
+
+Fora isso: busca e ordenação em todas as tabelas, tema claro e escuro, menu
+retrátil, atalhos de teclado (`/` busca, `b` recolhe o menu) e cor de destaque
+configurável.
+
+## O que falta
+
+Duas coisas, e vale saber antes de instalar:
+
+- **Terminal dentro do container.** Para entrar num container ainda é
+  `docker exec -it <nome> sh`.
+- **CPU e memória ao vivo.** A lista mostra estado e portas, mas não consumo.
+
+## Instalar
+
+Pegue o `.exe` na página de [releases](../../releases) ou compile:
 
 ```bash
-docker exec -it <nome> sh
-```
-
-## Instalação
-
-Baixe o executável da página de *releases*, ou compile:
-
-```bash
-git clone <url-do-repositorio>
-cd cais
+git clone https://github.com/YuriBertoldi/Cais.git
+cd Cais
 go build -o cais.exe .
 ```
 
-O Windows pode bloquear um executável não assinado baixado da internet. Libere
-com `Unblock-File .\cais.exe` no PowerShell.
+Se baixou da internet, o Windows pode bloquear o executável por não ser
+assinado. Resolve com `Unblock-File .\cais.exe` no PowerShell.
 
-## Pré-requisito: um Docker Engine acessível
+## Antes de rodar: o Docker precisa estar acessível
 
-O painel **não embute um motor Docker** — ele conversa com um que já exista,
+O Cais não embute motor nenhum. Ele conversa com um Docker Engine que já exista,
 pela Engine API em TCP.
 
-No Linux, exponha o daemon em loopback com um *drop-in* do systemd em
+Se o seu daemon ainda não escuta em TCP, crie
 `/etc/systemd/system/docker.service.d/override.conf`:
 
 ```ini
@@ -89,165 +88,138 @@ ExecStart=
 ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375
 ```
 
-> Declarar `hosts` no `daemon.json` **não funciona** quando a unit já passa
-> `-H fd://`: o daemon aborta com *"specified both as a flag and in the
-> configuration file"*.
+Um aviso que economiza meia hora: **não adianta colocar `hosts` no
+`daemon.json`**. A unit do systemd já passa `-H fd://`, e o daemon se recusa a
+subir reclamando que o host foi definido em dois lugares. Tem que ser pelo
+drop-in acima.
 
-No Windows com WSL2, o mesmo vale dentro da distro; o encaminhamento de
-`localhost` do WSL cuida do resto.
+No Windows com WSL2, mesma coisa dentro da distro — o encaminhamento de
+`localhost` do WSL resolve o resto.
 
-### Aviso de segurança
+### Leia isto antes de abrir a porta
 
-A porta 2375 **não tem autenticação e equivale a acesso root** na máquina que
-roda o daemon. Quem alcança essa porta pode subir um container privilegiado com
-o disco do host montado.
+A 2375 **não tem autenticação e dá acesso equivalente a root** na máquina do
+daemon. Quem alcança essa porta sobe um container privilegiado com o disco do
+host montado e acabou.
 
-**Faça o bind sempre em `127.0.0.1`, nunca em `0.0.0.0`.** Em rede não
-confiável, não habilite.
+Use `127.0.0.1`. Nunca `0.0.0.0`. Em rede que você não controla, não habilite.
 
-## Uso
+## Usar
 
 ```bash
 cais              # sobe e abre o navegador
-cais -dev         # recarrega templates a cada requisição
+cais -dev         # recarrega template a cada request, para desenvolver
 ```
 
-Um segundo duplo-clique não sobe outra instância: o processo detecta o painel
-já rodando pelo `/healthz`, abre o navegador nele e encerra.
+Dar duplo clique duas vezes não abre dois processos: o segundo percebe que já
+tem um rodando, abre o navegador nele e sai de cena.
 
-### Opções
-
-| Opção | Padrão | Descrição |
+| Opção | Padrão | Para quê |
 |---|---|---|
-| `-dev` | `false` | Lê templates e estáticos do disco, com *reparse* a cada requisição |
-| `-porta` | `45678` | Porta de escuta; `0` usa qualquer porta livre |
-| `-no-browser` | — | Não abre o navegador ao iniciar |
-| `-docker-host` | `tcp://127.0.0.1:2375` | Endpoint da Engine API |
-| `-wsl-distro` | `Ubuntu-24.04` | Distro usada para executar o `docker compose` |
-| `-db` | `%LOCALAPPDATA%\Cais\painel.db` | Caminho do banco local |
-
-### Atalhos de teclado
-
-| Tecla | Ação |
-|---|---|
-| `/` | Focar o campo de busca |
-| `Esc` | Limpar a busca |
-| `b` | Recolher ou expandir o menu |
+| `-porta` | `45678` | Porta de escuta. `0` pega qualquer uma livre |
+| `-docker-host` | `tcp://127.0.0.1:2375` | Onde está a Engine API |
+| `-wsl-distro` | `Ubuntu-24.04` | Distro usada para rodar o `docker compose` |
+| `-no-browser` | — | Não abrir o navegador ao iniciar |
+| `-db` | `%LOCALAPPDATA%\Cais\painel.db` | Banco local |
+| `-dev` | `false` | Lê template e CSS do disco |
 
 ## Segurança
 
-O painel não tem login, por desenho: ele serve um único usuário na própria
-máquina. A proteção vem de três camadas:
+Não tem login, e isso é de propósito: é uma ferramenta de um usuário só, na
+própria máquina. Senha ali seria teatro. A proteção é outra:
 
-1. **Loopback.** O *listener* só escuta em `127.0.0.1`.
-2. **Validação de origem.** `Host` e `Origin` são conferidos a cada requisição,
-   o que bloqueia *DNS rebinding*.
-3. **CSRF.** Token aleatório por processo, exigido em todo `POST` e na *query
-   string* de SSE e WebSocket.
+O servidor escuta só em `127.0.0.1`. Todo request tem `Host` e `Origin`
+conferidos, o que fecha a porta para DNS rebinding — aquele ataque em que um
+site qualquer resolve um domínio para `127.0.0.1` e passa a falar com o que
+roda na sua máquina. E todo `POST` exige um token CSRF gerado por processo.
 
-Nenhuma rota faz *proxy* cru para o daemon: cada operação é nomeada e consta de
-uma lista explícita de permissões. O valor da cor de destaque, que vai parar
-dentro de um bloco `<style>`, é validado contra `^#[0-9a-fA-F]{6}$`.
+Nenhuma rota repassa chamada crua para o daemon. Cada operação é nomeada e está
+numa lista explícita; não dá para inventar endpoint pela URL.
 
-## Arquitetura
+## Como é por dentro
 
-Monolito MVC, sem framework.
+Go com `net/http` e `html/template`. Sem framework, sem build de front-end.
 
 ```
-main.go          entrypoint: listener, instância única, navegador, encerramento
+main.go          listener, instância única, abre o navegador, encerra limpo
 embed.go         go:embed de templates/ e static/
 internal/
   config/        flags e caminho do banco
-  docker/        cliente da Engine API — client, containers, logs (demux),
-                 criar (pull/create), system (imagens, volumes), types
-  compose/       execução do Compose dentro do WSL — runner, tradução de caminho
+  docker/        cliente da Engine API
+  compose/       roda o Compose dentro do WSL
   store/         SQLite: migrations, preferências, stacks, histórico
   models/        entidades e dados de página
-  handler/       controllers, middlewares, templates, tema
-templates/       html/template (base.html + 10 páginas)
-static/          app.css, app.js, icons.svg, vendor/pico.classless.min.css
+  handler/       controllers, middlewares, tema
+templates/       base.html + 10 páginas
+static/          app.css, app.js, icons.svg, vendor/
 ```
 
-O coletor de estatísticas (`internal/stats/`) ainda não existe — entra com a
-fase 4.
+### Três decisões que talvez surpreendam
 
-### Decisões que valem explicar
+**Não usei o SDK oficial do Docker.** Ele traz uns 60 módulos transitivos e
+engorda o binário em 20–25 MB para cobrir uma API inteira, quando o Cais usa uns
+15 endpoints. O que o SDK resolveria e não é trivial — sequestrar a conexão para
+o `exec` e desmultiplexar o stream de log — deu umas 100 linhas, escritas uma
+vez. Valeu a pena.
 
-**Por que não o SDK oficial do Docker.** Peso. São ~60 módulos transitivos e
-20–25 MB no binário para cobrir uma API inteira, quando o painel usa ~15
-endpoints. O que o SDK resolveria e não é trivial — o *hijack* da conexão e a
-demultiplexação do stream de logs — são cerca de 100 linhas, escritas uma vez.
+**O Compose roda dentro do WSL, não pelo Windows.** Parece detalhe, mas não é.
+Um daemon Linux não entende caminho do Windows, então chamar `docker compose`
+pelo Windows contra um daemon no WSL quebra bind mount relativo **em silêncio**:
+o `up` passa sem erro e o container sobe com o diretório vazio. Você só descobre
+quando a aplicação lá dentro reclama de arquivo que não existe.
 
-**Por que o Compose roda dentro do WSL.** O Compose não existe na Engine API, é
-CLI. E um daemon Linux não entende caminho Windows: executar `docker compose`
-pelo Windows contra um daemon no WSL quebra *bind mounts* relativos de forma
-silenciosa — o `up` passa limpo e o container sobe com o diretório vazio.
+**SQLite em Go puro** (`modernc.org/sqlite`), e não o `mattn`. Dispensa cgo, e
+portanto dispensa toolchain C em quem for compilar. Numa equipe de Windows isso
+é a diferença entre `go build` funcionar e não funcionar.
 
-**Por que SQLite em Go puro.** `modernc.org/sqlite` dispensa cgo, e portanto
-dispensa uma *toolchain* C na máquina de quem compila.
-
-**Por que o download de imagem é `fetch` + stream, e não SSE.** O `EventSource`
-do navegador só faz `GET`, e baixar imagem muda estado — não cabe num `GET`. A
-rota é `POST` e devolve NDJSON, lido no front com `ReadableStream`. A barra de
-progresso conta **camadas concluídas**, não bytes: contar bytes faria a barra
-andar para trás quando uma camada nova aparece no meio do download.
-
-**Por que containers criados publicam só em `127.0.0.1`.** Um container de
-desenvolvimento não deveria ficar exposto na rede da empresa porque alguém
-esqueceu de restringir. Quem precisar expor tem de mudar isso de propósito.
-
-**Por que o Compose roda sincronamente, mas o log não.** Operações de Compose
-terminam em segundos e cabem num `POST` com *redirect*. Log é infinito — exige
-stream.
-
-## Desenvolvimento
+## Desenvolver
 
 ```bash
-go run . -dev      # templates recarregam sem recompilar
+go run . -dev
 go vet ./...
 ```
 
-Convenções do projeto:
+Convenções:
 
-- **Interface em português** com acentuação. **Código em português sem acento**
-  (identificadores e comentários), para evitar atrito de codificação de
-  caracteres entre editores.
-- Página nova: incluir o nome em `pages`, em `internal/handler/handler.go`.
-- Migration nova: incrementar a versão no array `migrations`, em
-  `internal/store/store.go`. Nunca editar uma migration já aplicada.
-- Rota nova: registrar em `internal/handler/routes.go`.
-- Acréscimos de CSS deste projeto ficam **no fim** do `app.css`, abaixo do
-  comentário de separação — o começo do arquivo é o design system herdado, e
-  mantê-lo intacto permite compará-lo com a origem.
+- Interface em português com acento. Código em português sem acento
+  (identificador e comentário) — evita briga de encoding entre editores.
+- Página nova: adicione o nome em `pages`, em `internal/handler/handler.go`.
+- Migration nova: incremente a versão no array `migrations` de
+  `internal/store/store.go`. Nunca edite migration já aplicada.
+- Rota nova: `internal/handler/routes.go`.
+- CSS novo vai **no fim** do `app.css`, abaixo do comentário de separação. O
+  começo do arquivo é design system herdado de outro projeto, e manter intacto
+  permite comparar com a origem depois.
 
-### Armadilhas que já custaram tempo
+### Pegadinhas que já me custaram tempo
 
-Vale ler antes de mexer no front:
+Se for mexer no front, leia isto antes:
 
-- **Scripts de página rodam antes do `app.js`.** O `app.js` é carregado no
-  `<head>` com `defer`, então executa depois do documento parseado. Toda
-  inicialização numa página precisa estar dentro de `DOMContentLoaded`. Sem
-  isso, estoura `is not defined` e o recurso falha **em silêncio**.
-- **O Pico trata `<dialog>` como contêiner de tela cheia** (`display: flex;
-  min-width: 100%`) e centraliza o primeiro filho. Todo diálogo precisa de um
-  invólucro — `.dialog-box` ou `<form>`. Sem ele, o conteúdo vira itens de flex
-  numa linha só. E `max-width` no `<dialog>` não resolve: `min-width` vence
-  `max-width` em CSS.
-- **O Pico declara `button[type=submit] { width: 100% }`**, especificidade
-  (0,1,1), que vence qualquer classe simples. Botões de ícone precisam de
-  `!important` na largura.
-- **Cuidado com regras genéricas de elemento dentro de contêiner.** Uma regra
-  como `.section-card label { display: block }` tem especificidade maior que
-  `.minha-classe` e quebra componentes que usam `<label>` como cartão. Prefira
-  `:not()` a empilhar `!important`.
-- **A cor de destaque é injetada num `<style>` que precisa vir DEPOIS do
+- **Script de página roda antes do `app.js`.** O `app.js` está no `<head>` com
+  `defer`, então executa depois do documento parseado. Toda inicialização de
+  página tem que estar dentro de `DOMContentLoaded`. Sem isso dá
+  `is not defined` e o recurso simplesmente não funciona — sem erro visível na
+  tela. Perdi um bom tempo com os filtros quebrados por causa disso.
+- **O Pico trata `<dialog>` como tela cheia** (`display: flex; min-width: 100%`)
+  e centraliza o primeiro filho. Todo diálogo precisa de um invólucro:
+  `.dialog-box` ou um `<form>`. Sem ele o conteúdo vira item de flex numa linha
+  só. E não tente resolver com `max-width` no `<dialog>`: `min-width` ganha de
+  `max-width`.
+- **`button[type=submit] { width: 100% }` do Pico** tem especificidade maior que
+  classe simples. Botão de ícone precisa de `!important` na largura.
+- **Cuidado com regra genérica de elemento dentro de container.** Algo como
+  `.section-card label { display: block }` ganha de `.minha-classe` e quebra
+  componente que usa `<label>` como cartão. Use `:not()` em vez de empilhar
+  `!important`.
+- **A cor de destaque é injetada num `<style>` que precisa vir depois do
   `app.css`.** Os dois definem `--color-accent` em `:root` com a mesma
-  especificidade; quem vem por último vence.
-- **Estáticos vindos de `go:embed` têm mtime zero**, então o Go não emite
-  `Last-Modified` nem `ETag` sozinho. O `cacheEstaticos` em `routes.go` supre
-  isso com um `ETag` derivado da versão do build — sem ele, o navegador serve
-  CSS antigo depois de atualizar o `.exe`.
+  especificidade, e aí decide quem vem por último.
+- **Arquivo de `go:embed` tem mtime zero**, então o Go não emite `Last-Modified`
+  nem `ETag`. O `cacheEstaticos` em `routes.go` cobre isso com um `ETag` da
+  versão do build. Sem ele, o navegador serve CSS velho depois que você troca o
+  `.exe` e parece que a atualização não pegou.
 
 ## Licença
 
-[MIT](LICENSE). Avisos de terceiros e de marcas em [NOTICE.md](NOTICE.md).
+[MIT](LICENSE). Créditos de terceiros e nota sobre a marca Docker em
+[NOTICE.md](NOTICE.md).
