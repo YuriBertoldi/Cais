@@ -1,0 +1,169 @@
+# Pipeline de validacao do Cais.
+#
+# Roda em windows-latest de proposito: o painel e um executavel Windows que
+# fala com o WSL (wsl.exe), abre o navegador por rundll32 e grava em
+# %LOCALAPPDATA%. Parte dos testes -- a traducao de caminho Windows para o
+# ponto de montagem do WSL, por exemplo -- so faz sentido nesse alvo.
+#
+# O job de vulnerabilidades roda em Linux porque e so analise do grafo de
+# dependencias, mais barata ali.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Um push novo na mesma ref cancela a execucao anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    name: Testes e analise estatica
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Conferir formatacao
+        run: |
+          $foraDoPadrao = gofmt -l .
+          if ($foraDoPadrao) {
+            foreach ($arquivo in $foraDoPadrao) {
+              Write-Host "::error file=$arquivo::fora do padrao gofmt; rode gofmt -w $arquivo"
+            }
+            exit 1
+          }
+          Write-Host "Todos os arquivos estao no padrao gofmt."
+
+      - name: Conferir go.mod e go.sum
+        run: |
+          go mod tidy
+          $pendentes = git status --porcelain go.mod go.sum
+          if ($pendentes) {
+            Write-Host "::error::go mod tidy alterou go.mod/go.sum; rode e comite o resultado"
+            git --no-pager diff go.mod go.sum
+            exit 1
+          }
+
+      - name: Analise estatica (go vet)
+        run: go vet ./...
+
+      - name: Testes
+        # As aspas em "-flag=valor" evitam que o PowerShell quebre o argumento
+        # no "=" e entregue dois tokens ao go.
+        run: go test ./... -count=1 "-covermode=atomic" "-coverprofile=cobertura.out"
+
+      - name: Resumo de cobertura
+        run: go tool cover "-func=cobertura.out"
+
+      - name: Detector de corrida
+        # Exige CGO e um compilador C. A imagem do runner traz o mingw, mas se
+        # um dia deixar de trazer, o aviso e melhor do que um pipeline vermelho
+        # por motivo alheio ao codigo.
+        run: |
+          if (Get-Command gcc -ErrorAction SilentlyContinue) {
+            $env:CGO_ENABLED = "1"
+            go test ./... -count=1 -race
+          } else {
+            Write-Host "::warning::gcc ausente no runner; detector de corrida nao foi executado"
+          }
+
+      - name: Publicar cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: cobertura.out
+          if-no-files-found: ignore
+
+  seguranca:
+    name: Vulnerabilidades conhecidas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  build:
+    name: Executavel
+    needs: validar
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Compilar
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $versao = $env:GITHUB_REF_NAME -replace '^v', ''
+          } else {
+            $versao = "0.0.0-$($env:GITHUB_SHA.Substring(0,7))"
+          }
+          Write-Host "Versao: $versao"
+          .\scripts\build.ps1 -Versao $versao
+
+      - name: Conferir que o binario sobe e responde
+        # Fecha o circuito que nenhum teste unitario alcanca: templates e
+        # estaticos embutidos, listener em loopback e o /healthz que identifica
+        # a instancia. Porta dinamica para nao colidir com nada no runner.
+        run: |
+          $proc = Start-Process -FilePath .\cais.exe `
+            -ArgumentList "-porta","0","-no-browser","-db","$env:RUNNER_TEMP\painel.db" `
+            -PassThru -RedirectStandardOutput saida.log -RedirectStandardError erro.log
+          try {
+            Start-Sleep -Seconds 3
+            if ($proc.HasExited) {
+              Write-Host "::error::o painel encerrou sozinho (codigo $($proc.ExitCode))"
+              Get-Content saida.log, erro.log
+              exit 1
+            }
+            # A porta efetiva sai no log de startup.
+            $log = (Get-Content saida.log, erro.log -ErrorAction SilentlyContinue) -join "`n"
+            if ($log -notmatch 'http://127\.0\.0\.1:(\d+)/') {
+              Write-Host "::error::nao foi possivel descobrir a porta no log de startup"
+              Write-Host $log
+              exit 1
+            }
+            $url = "http://127.0.0.1:$($Matches[1])/healthz"
+            $resp = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+            if ($resp.StatusCode -ne 200 -or -not $resp.Headers["X-Cais"]) {
+              Write-Host "::error::/healthz respondeu $($resp.StatusCode) sem identificacao"
+              exit 1
+            }
+            Write-Host "Painel respondeu em $url (versao $($resp.Headers["X-Cais"]))."
+          }
+          finally {
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          }
+
+      - name: Publicar executavel
+        uses: actions/upload-artifact@v4
+        with:
+          name: cais-exe
+          path: cais.exe
+          retention-days: 14

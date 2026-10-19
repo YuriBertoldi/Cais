@@ -1,0 +1,13 @@
+# O repositorio e normalizado em LF, inclusive no Windows.
+#
+# Sem isto, um clone em maquina com core.autocrlf=true (o padrao do Git for
+# Windows, e o que roda nos runners do GitHub) traz os fontes em CRLF. O gofmt
+# normaliza para LF, entao o gate de formatacao do CI reprovaria todo arquivo
+# .go logo no primeiro checkout, por um motivo que nao esta no codigo.
+* text=auto eol=lf
+
+# Binarios nao passam por conversao nenhuma.
+*.jpg binary
+*.png binary
+*.svg text eol=lf
+*.exe binary

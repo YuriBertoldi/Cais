@@ -176,6 +176,26 @@ go run . -dev
 go vet ./...
 ```
 
+### Validar antes de abrir PR
+
+```powershell
+.\scripts\validar.ps1              # mesmos gates do CI
+.\scripts\validar.ps1 -Cobertura   # abre o relatório de cobertura no navegador
+```
+
+O script roda formatação (`gofmt`), `go mod tidy`, `go vet`, os testes com
+cobertura e a compilação. O detector de corrida (`-race`) precisa de CGO e de
+um compilador C; se não houver `gcc` na máquina ele é pulado com aviso, e o CI
+cobre essa etapa.
+
+O pipeline (`.github/workflows/ci.yml`) repete tudo isso em `windows-latest` —
+o alvo real do produto, já que parte do comportamento depende de caminho
+Windows e do WSL —, roda `govulncheck` em Linux e, no job de build, sobe o
+`.exe` gerado e confere que o `/healthz` responde. Os testes **não** falam com
+o Docker nem chamam o `wsl.exe`: o cliente da Engine API é apontado para um
+`httptest.Server` que finge ser o daemon, e o painel é exercitado com
+`Docker: nil`, que é o estado de quem acabou de instalar.
+
 Convenções:
 
 - Interface em português com acento. Código em português sem acento
