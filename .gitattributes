@@ -7,6 +7,8 @@
 * text=auto eol=lf
 
 # Binarios nao passam por conversao nenhuma.
+*.ico binary
+*.syso binary
 *.jpg binary
 *.png binary
 *.svg text eol=lf

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // PortaPadrao e a porta fixa tentada antes de cair para porta livre dinamica.
@@ -13,6 +14,22 @@ const PortaPadrao = 45678
 
 // NomeApp e usado para montar o diretorio de dados em %LOCALAPPDATA%.
 const NomeApp = "Cais"
+
+// SocketDockerLinux e o caminho padrao do socket do daemon em Linux.
+const SocketDockerLinux = "unix:///var/run/docker.sock"
+
+// HostDockerPadrao devolve o endpoint presumido da Engine API no sistema atual.
+//
+// Em Linux o daemon atende no socket Unix e nao escuta em TCP: usar
+// tcp://127.0.0.1:2375 como padrao ali so levaria todo mundo a expor a porta
+// sem necessidade -- ela nao tem autenticacao e da acesso root-equivalente.
+// No Windows nao ha socket a assumir, entao o TCP em loopback continua.
+func HostDockerPadrao() string {
+	if runtime.GOOS == "windows" {
+		return "tcp://127.0.0.1:2375"
+	}
+	return SocketDockerLinux
+}
 
 // Config reune tudo que o main precisa para montar as dependencias.
 type Config struct {
@@ -37,7 +54,8 @@ func Load() Config {
 	flag.BoolVar(&c.Dev, "dev", false, "le templates/estaticos do disco e reparseia a cada request")
 	flag.IntVar(&c.Porta, "porta", PortaPadrao, "porta de escuta (0 = qualquer porta livre)")
 	navegador := flag.Bool("no-browser", false, "nao abrir o navegador no startup")
-	flag.StringVar(&c.DockerHost, "docker-host", "tcp://127.0.0.1:2375", "endpoint da Engine API: tcp://host:porta ou wsl://distro (dial-stdio, sem porta TCP)")
+	flag.StringVar(&c.DockerHost, "docker-host", HostDockerPadrao(),
+		"endpoint da Engine API: tcp://host:porta, wsl://distro (dial-stdio, sem porta TCP) ou unix:///caminho/do/socket")
 	flag.StringVar(&c.WSLDistro, "wsl-distro", "Ubuntu-24.04", "distro WSL usada para executar o docker compose")
 	flag.StringVar(&c.CaminhoDB, "db", "", "caminho do SQLite (padrao: %LOCALAPPDATA%\\Cais\\painel.db)")
 	flag.Parse()

@@ -41,10 +41,20 @@ try {
     }
 
     Etapa "Dependencias (go mod tidy)" {
+        # Compara o conteudo antes e depois, nao o git status: localmente o
+        # go.mod costuma ter alteracao legitima ainda nao comitada, e usar o
+        # git aqui reprovaria por isso em vez de pelo que o tidy fez.
+        $antes = @{}
+        foreach ($f in "go.mod", "go.sum") { $antes[$f] = Get-Content $f -Raw }
+
         & go mod tidy
         if ($LASTEXITCODE -ne 0) { throw "go mod tidy falhou" }
-        $pendentes = git status --porcelain go.mod go.sum
-        if ($pendentes) { throw "go.mod/go.sum mudaram; revise e comite o resultado" }
+
+        foreach ($f in "go.mod", "go.sum") {
+            if ((Get-Content $f -Raw) -ne $antes[$f]) {
+                throw "$f mudou com o go mod tidy; revise e comite o resultado"
+            }
+        }
     }
 
     Etapa "Analise estatica (go vet)" {

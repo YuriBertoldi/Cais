@@ -32,6 +32,7 @@ func TestNewDistroPadrao(t *testing.T) {
 // WSL, e --project-directory apontando para a pasta do proprio yml, para que
 // caminho relativo dentro do arquivo resolva a partir dela.
 func TestMontarArgumentos(t *testing.T) {
+	pularSeNaoForWindows(t)
 	r := New("Ubuntu-24.04")
 
 	cmd := r.montar(context.Background(), `C:\Sistemas\app\docker-compose.yml`, "", "up", "-d")
@@ -51,6 +52,7 @@ func TestMontarArgumentos(t *testing.T) {
 }
 
 func TestMontarComProjectName(t *testing.T) {
+	pularSeNaoForWindows(t)
 	r := New("Debian")
 
 	cmd := r.montar(context.Background(), `D:\app\compose.yml`, "meuprojeto", "ps")
@@ -67,6 +69,7 @@ func TestMontarComProjectName(t *testing.T) {
 }
 
 func TestMontarSemProjectNameNaoEnviaFlagP(t *testing.T) {
+	pularSeNaoForWindows(t)
 	cmd := New("Ubuntu-24.04").montar(context.Background(), `C:\a\compose.yml`, "", "down")
 	for _, a := range cmd.Args {
 		if a == "-p" {
@@ -78,6 +81,7 @@ func TestMontarSemProjectNameNaoEnviaFlagP(t *testing.T) {
 // Sem --exec o wsl.exe passa a linha de comando por um shell da distro, que
 // expande $VAR e $(...) nos argumentos (caminho do yml, nome do projeto).
 func TestMontarUsaExecSemShell(t *testing.T) {
+	pularSeNaoForWindows(t)
 	r := New("Ubuntu")
 	cmd := r.montar(context.Background(), `C:\pasta\a$(echo x)\docker-compose.yml`, "proj$USER", "up")
 
@@ -95,6 +99,42 @@ func TestMontarUsaExecSemShell(t *testing.T) {
 		if args[i] != esperado[i] {
 			t.Errorf("args[%d] = %q, esperava %q", i, args[i], esperado[i])
 		}
+	}
+}
+
+// TestMontarForaDoWindowsChamaDockerDireto: em Linux nao ha WSL entre o painel
+// e o daemon, e o caminho do yml ja e POSIX. Passar pelo wsl.exe ali seria
+// chamar um executavel que nem existe.
+func TestMontarForaDoWindowsChamaDockerDireto(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("cobre o ramo nao-Windows")
+	}
+	r := New("Ubuntu-24.04")
+
+	cmd := r.montar(context.Background(), "/home/dev/app/docker-compose.yml", "meuprojeto", "up", "-d")
+
+	esperado := []string{
+		"docker", "compose",
+		"-f", "/home/dev/app/docker-compose.yml",
+		"--project-directory", "/home/dev/app",
+		"-p", "meuprojeto",
+		"up", "-d",
+	}
+	compararArgs(t, cmd.Args, esperado)
+
+	for _, a := range cmd.Args {
+		if strings.Contains(a, "wsl") {
+			t.Errorf("argumento %q menciona WSL fora do Windows: %v", a, cmd.Args)
+		}
+	}
+}
+
+// pularSeNaoForWindows guarda os testes que afirmam a linha de comando com
+// wsl.exe e caminho traduzido -- ambos so valem no alvo Windows.
+func pularSeNaoForWindows(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS != "windows" {
+		t.Skip("a linha de comando com wsl.exe so vale no Windows")
 	}
 }
 

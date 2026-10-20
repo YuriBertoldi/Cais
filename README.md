@@ -60,26 +60,57 @@ Duas coisas, e vale saber antes de instalar:
 
 ## Instalar
 
-Pegue o `.exe` na página de [releases](../../releases) ou compile:
+Pegue o binário na página de [releases](../../releases) ou compile:
 
-```bash
+```powershell
 git clone https://github.com/YuriBertoldi/Cais.git
 cd Cais
-go build -o cais.exe .
+.\scripts\build.ps1                      # cais.exe (Windows)
+.\scripts\build.ps1 -Plataforma linux    # cais-linux-amd64
+.\scripts\build.ps1 -Plataforma ambos
 ```
+
+Use o script, não `go build` direto: é ele que aplica o `-H=windowsgui`, sem o
+qual o `.exe` abre uma janela de console que fica aberta enquanto o painel
+roda. Para arquitetura, `-Arquitetura arm64`.
 
 Se baixou da internet, o Windows pode bloquear o executável por não ser
 assinado. Resolve com `Unblock-File .\cais.exe` no PowerShell.
 
+### No Linux
+
+O binário é o mesmo painel, com três diferenças que o próprio executável já
+resolve: fala com o daemon pelo socket Unix (`unix:///var/run/docker.sock`, o
+padrão ali), roda o `docker compose` direto em vez de pelo WSL, e abre o
+navegador com `xdg-open`.
+
+```bash
+chmod +x cais-linux-amd64
+./cais-linux-amd64
+```
+
+Seu usuário precisa de permissão no socket — normalmente, estar no grupo
+`docker`.
+
+### Onde ficam os arquivos
+
+O painel grava `painel.db` e `cais.log` na mesma pasta, apontada por `-db`.
+No Windows o padrão é `%LOCALAPPDATA%\Cais`; no Linux, `~/.cache/Cais`.
+
+O log existe porque o `.exe` não tem console: sem ele, um erro de inicialização
+não apareceria em lugar nenhum. Falha que impede o painel de subir também vira
+uma caixa de mensagem.
+
 ## Antes de rodar: o Docker precisa estar acessível
 
 O Cais não embute motor nenhum. Ele conversa com um Docker Engine que já exista,
-pela Engine API, por um de dois transportes:
+pela Engine API, por um de três transportes:
 
 | Transporte | `-docker-host` | Exige |
 |---|---|---|
-| TCP | `tcp://127.0.0.1:2375` (padrão) | Daemon escutando em TCP, **sem autenticação** |
+| TCP | `tcp://127.0.0.1:2375` (padrão no Windows) | Daemon escutando em TCP, **sem autenticação** |
 | WSL (`dial-stdio`) | `wsl://<distro>` | Só o `docker` instalado na distro WSL |
+| Socket Unix | `unix:///var/run/docker.sock` (padrão no Linux) | Permissão no arquivo de socket |
 
 ### Opção sem abrir porta: `wsl://`
 
@@ -137,10 +168,10 @@ tem um rodando, abre o navegador nele e sai de cena.
 | Opção | Padrão | Para quê |
 |---|---|---|
 | `-porta` | `45678` | Porta de escuta. `0` pega qualquer uma livre |
-| `-docker-host` | `tcp://127.0.0.1:2375` | Onde está a Engine API: `tcp://host:porta` ou `wsl://distro` |
+| `-docker-host` | `tcp://...` no Windows, `unix://...` no Linux | Onde está a Engine API: `tcp://host:porta`, `wsl://distro` ou `unix:///caminho` |
 | `-wsl-distro` | `Ubuntu-24.04` | Distro usada para rodar o `docker compose` |
 | `-no-browser` | — | Não abrir o navegador ao iniciar |
-| `-db` | `%LOCALAPPDATA%\Cais\painel.db` | Banco local |
+| `-db` | `%LOCALAPPDATA%\Cais\painel.db` | Banco local. O `cais.log` fica na mesma pasta |
 | `-dev` | `false` | Lê template e CSS do disco |
 
 ## Segurança

@@ -145,25 +145,39 @@ jobs:
             $versao = "0.0.0-$($env:GITHUB_SHA.Substring(0,7))"
           }
           Write-Host "Versao: $versao"
+          # Exportada para os passos seguintes reutilizarem a mesma versao.
+          "VERSAO=$versao" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           .\scripts\build.ps1 -Versao $versao
 
       - name: Conferir que o binario sobe e responde
         # Fecha o circuito que nenhum teste unitario alcanca: templates e
         # estaticos embutidos, listener em loopback e o /healthz que identifica
         # a instancia. Porta dinamica para nao colidir com nada no runner.
+        #
+        # O log e lido do arquivo, nao de stdout: o binario e compilado com
+        # -H=windowsgui e, sem console, stdout nao e destino confiavel. O
+        # painel grava cais.log ao lado do banco, entao -db define os dois.
         run: |
+          $dados = Join-Path $env:RUNNER_TEMP "cais-ci"
+          New-Item -ItemType Directory -Force -Path $dados | Out-Null
+          $arquivoLog = Join-Path $dados "cais.log"
+
           $proc = Start-Process -FilePath .\cais.exe `
-            -ArgumentList "-porta","0","-no-browser","-db","$env:RUNNER_TEMP\painel.db" `
-            -PassThru -RedirectStandardOutput saida.log -RedirectStandardError erro.log
+            -ArgumentList "-porta","0","-no-browser","-db","$dados\painel.db" `
+            -PassThru
           try {
             Start-Sleep -Seconds 3
             if ($proc.HasExited) {
               Write-Host "::error::o painel encerrou sozinho (codigo $($proc.ExitCode))"
-              Get-Content saida.log, erro.log
+              if (Test-Path $arquivoLog) { Get-Content $arquivoLog }
+              exit 1
+            }
+            if (-not (Test-Path $arquivoLog)) {
+              Write-Host "::error::o painel nao gravou $arquivoLog"
               exit 1
             }
             # A porta efetiva sai no log de startup.
-            $log = (Get-Content saida.log, erro.log -ErrorAction SilentlyContinue) -join "`n"
+            $log = (Get-Content $arquivoLog) -join "`n"
             if ($log -notmatch 'http://127\.0\.0\.1:(\d+)/') {
               Write-Host "::error::nao foi possivel descobrir a porta no log de startup"
               Write-Host $log
@@ -181,9 +195,51 @@ jobs:
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
-      - name: Publicar executavel
+      - name: Conferir que o icone entrou no executavel
+        # O recurso vem do .syso versionado. Se o arquivo sumir ou perder o
+        # sufixo _windows_amd64, o build continua passando e o .exe sai sem
+        # icone -- falha silenciosa que so apareceria no Explorer.
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $ico = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path .\cais.exe).Path)
+          if (-not $ico) {
+            Write-Host "::error::o executavel saiu sem icone embutido"
+            exit 1
+          }
+          Write-Host "Icone embutido: $($ico.Width)x$($ico.Height)."
+
+      - name: Conferir que o executavel nao abre console
+        # Subsystem 2 = GUI (sem janela de console), 3 = console. Sem o
+        # -H=windowsgui do build.ps1, o duplo-clique deixaria uma janela preta
+        # aberta durante toda a vida do painel.
+        run: |
+          $b = [System.IO.File]::ReadAllBytes((Resolve-Path .\cais.exe).Path)
+          $pe = [BitConverter]::ToInt32($b, 0x3C)
+          $subsistema = [BitConverter]::ToUInt16($b, $pe + 92)
+          if ($subsistema -ne 2) {
+            Write-Host "::error::Subsystem do PE = $subsistema; esperado 2 (janela, sem console)"
+            exit 1
+          }
+          Write-Host "Subsystem do PE = 2: sem console."
+
+      - name: Compilar para Linux
+        run: .\scripts\build.ps1 -Versao "${{ env.VERSAO }}" -Plataforma linux
+
+      - name: Conferir que o binario Linux e um ELF
+        run: |
+          $b = [System.IO.File]::ReadAllBytes((Resolve-Path .\cais-linux-amd64).Path)
+          $magico = [System.Text.Encoding]::ASCII.GetString($b[1..3])
+          if ($b[0] -ne 0x7F -or $magico -ne "ELF") {
+            Write-Host "::error::cais-linux-amd64 nao e um ELF"
+            exit 1
+          }
+          Write-Host "cais-linux-amd64 e um ELF valido."
+
+      - name: Publicar executaveis
         uses: actions/upload-artifact@v4
         with:
-          name: cais-exe
-          path: cais.exe
+          name: cais-binarios
+          path: |
+            cais.exe
+            cais-linux-amd64
           retention-days: 14

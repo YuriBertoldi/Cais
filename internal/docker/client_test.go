@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -38,7 +39,7 @@ func TestNewEscolheTransportePeloPrefixo(t *testing.T) {
 		{"tcp://10.0.0.5:2376", "tcp://10.0.0.5:2376", false},
 		{"wsl://Ubuntu-24.04", "wsl://Ubuntu-24.04", false},
 		{"wsl://", "wsl://(distro padrao)", false},
-		{"unix:///var/run/docker.sock", "", true},
+		{"unix:///var/run/docker.sock", "unix:///var/run/docker.sock", false},
 		{"http://127.0.0.1:2375", "", true},
 	}
 	for _, c := range casos {
@@ -73,6 +74,34 @@ func TestNewHostNaoSuportado(t *testing.T) {
 		if _, err := New(Options{Host: host}); err == nil {
 			t.Errorf("New(%q) nao devolveu erro", host)
 		}
+	}
+}
+
+// TestUnixDialerDescricao: o caminho do socket entra inteiro na descricao,
+// inclusive a barra que sobra do "unix://" + "/var/run/...".
+func TestUnixDialerDescricao(t *testing.T) {
+	casos := []struct{ caminho, esperado string }{
+		{"/var/run/docker.sock", "unix:///var/run/docker.sock"},
+		{"/home/dev/.docker/desktop/docker.sock", "unix:///home/dev/.docker/desktop/docker.sock"},
+	}
+
+	for _, c := range casos {
+		if got := (&unixDialer{caminho: c.caminho}).Descricao(); got != c.esperado {
+			t.Errorf("Descricao() = %q; esperado %q", got, c.esperado)
+		}
+	}
+}
+
+// TestUnixDialerSocketInexistente garante que a falha vem do dial, e nao de um
+// panico por caminho vazio.
+func TestUnixDialerSocketInexistente(t *testing.T) {
+	d := &unixDialer{caminho: filepath.Join(t.TempDir(), "nao-existe.sock")}
+
+	conn, err := d.DialContext(context.Background())
+
+	if err == nil {
+		conn.Close()
+		t.Fatal("esperado erro para socket inexistente")
 	}
 }
 

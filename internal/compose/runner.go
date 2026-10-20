@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
-// Runner executa o docker compose dentro de uma distro WSL.
+// Runner executa o docker compose: no Windows, dentro de uma distro WSL;
+// em Linux, direto na maquina. Distro e ignorado fora do Windows.
 type Runner struct {
 	Distro string
 }
@@ -36,7 +38,10 @@ type Servico struct {
 // Rodando informa se o servico esta de pe.
 func (s Servico) Rodando() bool { return s.State == "running" }
 
-// montar prepara o comando `wsl -d <distro> -- docker compose -f <yml> ...`.
+// montar prepara a chamada do compose.
+//
+// No Windows, `wsl -d <distro> --exec docker compose -f <yml> ...`; em Linux,
+// `docker compose` direto, porque nao ha WSL entre o painel e o daemon.
 //
 // O -f vai sempre absoluto e traduzido, e o --project-directory aponta para a
 // pasta do proprio yml, para que caminhos relativos do arquivo resolvam a
@@ -45,11 +50,20 @@ func (r *Runner) montar(ctx context.Context, caminhoYML, projectName string, arg
 	yml := ToWSLPath(caminhoYML)
 	dir := ToWSLPath(filepath.Dir(caminhoYML))
 
-	base := []string{"-d", r.Distro, "--exec", "docker", "compose", "-f", yml, "--project-directory", dir}
+	compose := []string{"compose", "-f", yml, "--project-directory", dir}
 	if projectName != "" {
-		base = append(base, "-p", projectName)
+		compose = append(compose, "-p", projectName)
 	}
-	return exec.CommandContext(ctx, "wsl.exe", append(base, args...)...)
+	compose = append(compose, args...)
+
+	// Fora do Windows nao ha WSL no meio: o painel, a CLI e o daemon estao na
+	// mesma maquina, e o caminho do yml ja e POSIX.
+	if runtime.GOOS != "windows" {
+		return exec.CommandContext(ctx, "docker", compose...)
+	}
+
+	base := []string{"-d", r.Distro, "--exec", "docker"}
+	return exec.CommandContext(ctx, "wsl.exe", append(base, compose...)...)
 }
 
 // executar roda o comando e devolve a saida combinada.

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -90,8 +91,8 @@ func TestLoadPadroes(t *testing.T) {
 	if !c.AbrirNavegador {
 		t.Error("AbrirNavegador = false; o padrao e abrir o navegador no startup")
 	}
-	if c.DockerHost != "tcp://127.0.0.1:2375" {
-		t.Errorf("DockerHost = %q", c.DockerHost)
+	if c.DockerHost != HostDockerPadrao() {
+		t.Errorf("DockerHost = %q; esperado o padrao do sistema %q", c.DockerHost, HostDockerPadrao())
 	}
 	if c.WSLDistro != "Ubuntu-24.04" {
 		t.Errorf("WSLDistro = %q", c.WSLDistro)
@@ -131,6 +132,26 @@ func TestLoadComFlags(t *testing.T) {
 	}
 	if c.CaminhoDB != `C:\tmp\outro.db` {
 		t.Errorf("CaminhoDB = %q; o -db informado deveria vencer o padrao", c.CaminhoDB)
+	}
+}
+
+// TestHostDockerPadrao trava a escolha por sistema. Em Linux o daemon atende
+// no socket Unix; apontar o padrao para tcp://127.0.0.1:2375 ali empurraria
+// todo mundo a expor uma porta sem autenticacao sem precisar.
+func TestHostDockerPadrao(t *testing.T) {
+	got := HostDockerPadrao()
+
+	if runtime.GOOS == "windows" {
+		if got != "tcp://127.0.0.1:2375" {
+			t.Errorf("HostDockerPadrao() = %q; esperado tcp://127.0.0.1:2375 no Windows", got)
+		}
+		return
+	}
+	if got != SocketDockerLinux {
+		t.Errorf("HostDockerPadrao() = %q; esperado %q", got, SocketDockerLinux)
+	}
+	if !strings.HasPrefix(got, "unix://") {
+		t.Errorf("HostDockerPadrao() = %q; esperado o esquema unix://", got)
 	}
 }
 
