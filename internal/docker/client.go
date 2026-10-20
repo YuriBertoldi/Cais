@@ -40,6 +40,20 @@ func (d *tcpDialer) DialContext(ctx context.Context) (net.Conn, error) {
 
 func (d *tcpDialer) Descricao() string { return "tcp://" + d.addr }
 
+// unixDialer conversa com o daemon pelo socket Unix, o jeito padrao em Linux.
+//
+// E o equivalente nativo do que o wslDialer faz por fora no Windows: o daemon
+// nao precisa escutar em TCP, e quem alcanca a Engine API e so quem tem
+// permissao no arquivo de socket.
+type unixDialer struct{ caminho string }
+
+func (d *unixDialer) DialContext(ctx context.Context) (net.Conn, error) {
+	var dl net.Dialer
+	return dl.DialContext(ctx, "unix", d.caminho)
+}
+
+func (d *unixDialer) Descricao() string { return "unix://" + d.caminho }
+
 // Client e um cliente da Engine API.
 type Client struct {
 	dialer Dialer
@@ -70,8 +84,11 @@ func New(o Options) (*Client, error) {
 		d = &tcpDialer{addr: strings.TrimPrefix(host, "tcp://")}
 	case strings.HasPrefix(host, "wsl://"):
 		d = &wslDialer{distro: strings.TrimPrefix(host, "wsl://")}
+	case strings.HasPrefix(host, "unix://"):
+		d = &unixDialer{caminho: strings.TrimPrefix(host, "unix://")}
 	default:
-		return nil, fmt.Errorf("host %q nao suportado: use tcp://host:porta ou wsl://distro", host)
+		return nil, fmt.Errorf(
+			"host %q nao suportado: use tcp://host:porta, wsl://distro ou unix:///caminho/do/socket", host)
 	}
 
 	if o.Timeout <= 0 {

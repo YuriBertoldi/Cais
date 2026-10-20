@@ -10,12 +10,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -32,13 +35,21 @@ var versao = "dev"
 func main() {
 	if err := run(); err != nil {
 		slog.Error("falha ao iniciar o painel", "erro", err)
+		// O executavel distribuido e compilado com -H=windowsgui e nao tem
+		// console: sem este aviso, um duplo-clique que falha nao mostraria
+		// absolutamente nada ao usuario.
+		avisarFalhaFatal(err)
 		os.Exit(1)
 	}
 }
 
 func run() error {
 	cfg := config.Load()
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	destino, fecharLog := destinoDoLog(cfg.CaminhoDB)
+	defer fecharLog()
+
+	log := slog.New(slog.NewTextHandler(destino, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(log)
 
 	// Instancia unica: se a porta padrao ja estiver ocupada pelo proprio
@@ -136,6 +147,31 @@ func run() error {
 	return srv.Shutdown(ctx)
 }
 
+// NomeArquivoLog e o log do painel, gravado ao lado do banco.
+const NomeArquivoLog = "cais.log"
+
+// destinoDoLog manda o log para o arquivo e, quando ha console, tambem para a
+// saida padrao.
+//
+// O executavel distribuido e compilado com -H=windowsgui justamente para nao
+// deixar uma janela de console aberta enquanto o painel roda. O preco e que
+// stdout vai para lugar nenhum, entao o arquivo e a unica trilha que sobra
+// quando algo da errado. Fica ao lado do banco para que -db leve os dois
+// juntos.
+func destinoDoLog(caminhoDB string) (io.Writer, func()) {
+	caminho := filepath.Join(filepath.Dir(caminhoDB), NomeArquivoLog)
+
+	if err := os.MkdirAll(filepath.Dir(caminho), 0o755); err != nil {
+		return os.Stdout, func() {}
+	}
+	f, err := os.OpenFile(caminho, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		// Sem arquivo, o console ainda serve em execucao interativa.
+		return os.Stdout, func() {}
+	}
+	return io.MultiWriter(os.Stdout, f), func() { f.Close() }
+}
+
 // erroPortaOcupada sinaliza que a porta ja esta servida por outra instancia
 // deste mesmo painel.
 type erroPortaOcupada struct{ porta int }
@@ -179,15 +215,24 @@ func ehNossaInstancia(porta int) bool {
 	return resp.Header.Get("X-Cais") != ""
 }
 
-// abrirNavegador abre a URL no navegador padrao do Windows.
-//
-// Usa rundll32 em vez de "cmd /c start": o start trata o primeiro argumento
-// entre aspas como titulo da janela, o que silenciosamente nao abre a URL.
+// abrirNavegador abre a URL no navegador padrao do sistema.
 func abrirNavegador(url string, log *slog.Logger) {
-	cmd := exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	cmd := comandoNavegador(url)
 	if err := cmd.Start(); err != nil {
 		log.Warn("nao foi possivel abrir o navegador", "erro", err, "url", url)
 		return
 	}
 	go cmd.Wait() // evita processo zumbi
+}
+
+// comandoNavegador monta a chamada que delega a URL ao navegador padrao.
+//
+// No Windows usa rundll32 em vez de "cmd /c start": o start trata o primeiro
+// argumento entre aspas como titulo da janela, o que silenciosamente nao abre
+// a URL. Fora do Windows, xdg-open e o despachante padrao do freedesktop.
+func comandoNavegador(url string) *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	}
+	return exec.Command("xdg-open", url)
 }
