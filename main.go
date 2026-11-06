@@ -169,7 +169,9 @@ func destinoDoLog(caminhoDB string) (io.Writer, func()) {
 		// Sem arquivo, o console ainda serve em execucao interativa.
 		return os.Stdout, func() {}
 	}
-	return io.MultiWriter(os.Stdout, f), func() { f.Close() }
+	// O arquivo vem primeiro porque io.MultiWriter para no primeiro erro, e sem
+	// console a escrita em os.Stdout falha.
+	return io.MultiWriter(f, os.Stdout), func() { f.Close() }
 }
 
 // erroPortaOcupada sinaliza que a porta ja esta servida por outra instancia

@@ -30,6 +30,35 @@ func TestDestinoDoLogGravaAoLadoDoBanco(t *testing.T) {
 	}
 }
 
+// TestDestinoDoLogGravaNoArquivoSemSaidaPadrao reproduz o executavel compilado
+// com -H=windowsgui: sem console, escrever em os.Stdout falha, e essa falha nao
+// pode impedir a gravacao no arquivo, a unica trilha que sobra nesse modo.
+func TestDestinoDoLogGravaNoArquivoSemSaidaPadrao(t *testing.T) {
+	dir := t.TempDir()
+
+	saidaInvalida, err := os.Create(filepath.Join(dir, "saida-invalida"))
+	if err != nil {
+		t.Fatalf("preparar a saida padrao invalida: %v", err)
+	}
+	saidaInvalida.Close()
+
+	saidaOriginal := os.Stdout
+	os.Stdout = saidaInvalida
+	t.Cleanup(func() { os.Stdout = saidaOriginal })
+
+	w, fechar := destinoDoLog(filepath.Join(dir, "painel.db"))
+	w.Write([]byte("linha sem console\n"))
+	fechar()
+
+	conteudo, err := os.ReadFile(filepath.Join(dir, NomeArquivoLog))
+	if err != nil {
+		t.Fatalf("ler o log: %v", err)
+	}
+	if !strings.Contains(string(conteudo), "linha sem console") {
+		t.Errorf("log = %q; esperado conter a linha mesmo sem saida padrao", conteudo)
+	}
+}
+
 // TestDestinoDoLogCriaODiretorio cobre a primeira execucao, em que a pasta de
 // dados ainda nao existe.
 func TestDestinoDoLogCriaODiretorio(t *testing.T) {
